@@ -29,7 +29,7 @@ class Chunk {
       chunkSize.z,
     ]);
     this.data.unmap();
-    
+
     this.faces = device.createBuffer({
       size: (
         // indirect drawing buffer
