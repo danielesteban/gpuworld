@@ -102,7 +102,10 @@ class Renderer {
         format,
         sampleCount,
         size,
-        usage: GPUTextureUsage.RENDER_ATTACHMENT | GPUTextureUsage.TEXTURE_BINDING,
+        usage: (
+          GPUTextureUsage.RENDER_ATTACHMENT
+          | (sampleCount === 1 ? GPUTextureUsage.TEXTURE_BINDING : 0)
+        ),
       });
       if (sampleCount === 1) {
         object.resolveTarget = texture.createView();
