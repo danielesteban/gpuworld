@@ -5,24 +5,7 @@ import Input from './render/input.js';
 import Renderer from './render/renderer.js';
 import World from './compute/world.js';
 
-const checkConstSupport = async (device) => {
-  const module = device.createShaderModule({
-    code: `const checkConstSupport : f32 = 1;`,
-  });
-  const { messages } = await module.compilationInfo();
-  if (messages.find(({ type }) => type === 'error')) {
-    throw new Error('ConstSupport');
-  }
-};
-
-const Main = async () => {
-  if (!navigator.gpu || !navigator.gpu.getPreferredCanvasFormat) {
-    throw new Error('WebGPU');
-  }
-  const adapter = await navigator.gpu.requestAdapter();
-  const device = await adapter.requestDevice();
-  await checkConstSupport(device);
-
+const Main = ({ adapter, device }) => {
   const camera = new Camera({ device });
   const world = new World({ camera, device });
   const renderer = new Renderer({ adapter, camera, device });
@@ -78,7 +61,27 @@ const Main = async () => {
   requestAnimationFrame(animate);
 };
 
-Main()
+const GPU = async () => {
+  if (!navigator.gpu || !navigator.gpu.getPreferredCanvasFormat) {
+    throw new Error('WebGPU support');
+  }
+  const adapter = await navigator.gpu.requestAdapter();
+  if (!adapter) {
+    throw new Error('WebGPU adapter');
+  }
+  const device = await adapter.requestDevice();
+  const check = device.createShaderModule({
+    code: `const checkConstSupport : f32 = 1;`,
+  });
+  const { messages } = await check.compilationInfo();
+  if (messages.find(({ type }) => type === 'error')) {
+    throw new Error('WGSL const support');
+  }
+  return { adapter, device };
+};
+
+GPU()
+  .then(Main)
   .catch((e) => {
     console.error(e);
     document.getElementById('canary').classList.add('enabled');
