@@ -219,7 +219,7 @@ class Input {
       Math.cos(look.state[0]),
       Math.sin(look.state[0]) * Math.cos(look.state[1])
     );
-    vec3.cross(vectors.right, vectors.forward, vectors.worldUp);
+    vec3.normalize(vectors.right, vec3.cross(vectors.right, vectors.forward, vectors.worldUp));
 
     if (_movement[0] !== 0 || _movement[1] !== 0 || _movement[2] !== 0) {
       vec3.set(_direction, 0, 0, 0);
