@@ -9,17 +9,17 @@ class Chunk {
       mappedAtCreation: true,
       size: (
         // bounds
-        12
+        6
         // voxels
         + chunkSize.x * chunkSize.y * chunkSize.z
         // light
         + chunkSize.x * chunkSize.y * chunkSize.z
-        // queues
-        + (1 + chunkSize.x * chunkSize.z * 3) * 2
-        // queue
-        + 1
         // remesh
         + 1
+        // queue
+        + 1
+        // queues
+        + (1 + chunkSize.x * chunkSize.z * 3) * 2
       ) * Uint32Array.BYTES_PER_ELEMENT,
       usage: GPUBufferUsage.STORAGE,
     });
@@ -73,8 +73,6 @@ Chunk.compute = ({
   struct Bounds {
     min : array<${atomicBounds ? 'atomic<u32>' : 'u32'}, 3>,
     max : array<${atomicBounds ? 'atomic<u32>' : 'u32'}, 3>,
-    center : vec3<f32>,
-    radius : f32,
   }
 
   struct Faces {
@@ -94,9 +92,9 @@ Chunk.compute = ({
     bounds : Bounds,
     voxels : array<u32, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
     light : array<${atomicLight ? 'atomic<u32>' : 'u32'}, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
-    queues : array<Queue, 2>,
-    queue : u32,
     remesh : u32,
+    queue : u32,
+    queues : array<Queue, 2>,
   }
 
   fn getVoxel(pos : vec3<i32>) -> u32 {

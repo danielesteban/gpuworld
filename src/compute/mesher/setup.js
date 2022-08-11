@@ -7,12 +7,21 @@ ${Chunk.compute({ chunkSize })}
 @group(0) @binding(1) var<storage, read_write> workgroups : array<u32, 3>;
 @group(1) @binding(0) var<storage, read_write> chunk : Chunk;
 @group(1) @binding(1) var<storage, read_write> faces : Faces;
+@group(1) @binding(2) var<uniform> position : vec3<i32>;
 
 fn isInFrustum() -> bool {
+  var corner : vec3<f32>;
+  var origin : vec3<f32> = vec3<f32>(position);
   for (var i : i32 = 0; i < 6; i++) {
     var plane : vec4<f32> = frustum[i];
-    var distance : f32 = dot(plane.xyz, chunk.bounds.center) + plane.w;
-    if (distance < -chunk.bounds.radius) {
+    for (var j : i32 = 0; j < 3; j++) {
+      if (plane[j] > 0) {
+        corner[j] = f32(chunk.bounds.max[j]);
+      } else {
+        corner[j] = f32(chunk.bounds.min[j]);
+      }
+    }
+    if ((dot(plane.xyz, origin + corner) + plane.w) < 0) {
       return false;
     }
   }
@@ -78,6 +87,10 @@ class MesherSetup {
           {
             binding: 1,
             resource: { buffer: chunk.faces },
+          },
+          {
+            binding: 2,
+            resource: { buffer: chunk.offset },
           },
         ],
       });
