@@ -26,7 +26,7 @@ const faceNormals = array<Normals, 6>(
   Normals(vec3<i32>(0, 0, -1), vec3<i32>(0, 1, 0), vec3<i32>(-1, 0, 0)),
 );
 
-const neighbors = array<vec2<i32>, 5>(
+const lightSamples = array<vec2<i32>, 5>(
   vec2<i32>(0, 0),
   vec2<i32>(-1, 0),
   vec2<i32>(1, 0),
@@ -65,9 +65,9 @@ fn getNeighbor(pos : vec3<i32>) -> Voxel {
 fn getLight(pos : vec3<i32>, u : vec3<i32>, v : vec3<i32>) -> f32 {
   var level : f32;
   var count : i32;
-  for (var n : i32 = 0; n < 5; n++) {
-    let nuv = neighbors[n];
-    let npos : vec3<i32> = pos + u * nuv.x + v * nuv.y;
+  for (var i : i32 = 0; i < 5; i++) {
+    let uv = lightSamples[i];
+    let npos : vec3<i32> = pos + u * uv.x + v * uv.y;
     let neighbor : Voxel = getNeighbor(npos);
     if (neighbor.value == 0 && neighbor.light != 0) {
       level += f32(neighbor.light);
