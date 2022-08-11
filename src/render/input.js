@@ -226,14 +226,15 @@ class Input {
       vec3.scaleAndAdd(_direction, _direction, vectors.right, _movement[0]);
       vec3.scaleAndAdd(_direction, _direction, vectors.worldUp, _movement[1]);
       vec3.scaleAndAdd(_direction, _direction, vectors.forward, _movement[2]);
-      vec3.normalize(_direction, _direction);
+      vec3.set(_movement, 0, 0, 0);
+      const length = vec3.length(_direction);
+      if (length > 1) vec3.scale(_direction, _direction, 1 / length);
       vec3.scaleAndAdd(
         position.target,
         position.target,
         _direction,
         delta * speed.state
       );
-      vec3.set(_movement, 0, 0, 0);
     }
     vec3.lerp(position.state, position.state, position.target, 1 - Math.exp(-10 * delta));
   }
