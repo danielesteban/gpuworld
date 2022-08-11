@@ -15,18 +15,16 @@ const Main = ({ adapter, device }) => {
     renderer.setSize(window.innerWidth, window.innerHeight)
   ), false);
 
-  renderer.setClearColor(0.2, 0.6, 0.6);
-  vec3.set(camera.position, 0, world.chunkSize.y * 0.5, 0);
-
   let clock = performance.now() / 1000;
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') {
       clock = performance.now() / 1000;
     }
   }, false);
+
   const input = new Input({
-    position: camera.position,
-    target: document.getElementById('renderer'),
+    position: vec3.set(camera.position, 0, world.chunkSize.y * 0.5, 0),
+    target: renderer.canvas,
   });
 
   const anchor = vec2.create();
@@ -57,7 +55,9 @@ const Main = ({ adapter, device }) => {
     device.queue.submit([command.finish()]);
   };
 
+  renderer.setClearColor(0.2, 0.6, 0.6);
   renderer.voxels.atlas.compute();
+  renderer.voxels.atlas.setupDragAndDrop();
   requestAnimationFrame(animate);
 };
 

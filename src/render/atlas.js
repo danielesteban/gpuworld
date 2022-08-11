@@ -56,7 +56,7 @@ class Atlas {
       dimension: '2d',
       size: [width, height, count],
       format: 'rgba8unorm',
-      usage: GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
     });
     this.workgroups = Math.ceil((count * width * height) / 256);
   }
@@ -85,6 +85,35 @@ class Atlas {
     pass.dispatchWorkgroups(workgroups);
     pass.end();
     device.queue.submit([command.finish()]);
+  }
+
+  setupDragAndDrop() {
+    window.addEventListener('dragenter', (e) => e.preventDefault(), false);
+    window.addEventListener('dragover', (e) => e.preventDefault(), false);
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const [file] = e.dataTransfer.files;
+      if (!file || file.type.indexOf('image/') !== 0) {
+        return;
+      }
+      const image = new Image();
+      image.addEventListener('load', () => {
+        const { device, count, width, height, texture } = this;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        canvas.width = width;
+        canvas.height = height * count;
+        ctx.drawImage(image, 0, 0);
+        const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+        device.queue.writeTexture(
+          { texture },
+          pixels.data.buffer,
+          { bytesPerRow: width * 4, rowsPerImage: height },
+          [width, height, count]
+        );
+      }, false);
+      image.src = URL.createObjectURL(file);
+    }, false);
   }
 }
 
