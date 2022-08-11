@@ -62,7 +62,7 @@ const Main = ({ adapter, device }) => {
 };
 
 const GPU = async () => {
-  if (!navigator.gpu || !navigator.gpu.getPreferredCanvasFormat) {
+  if (!navigator.gpu) {
     throw new Error('WebGPU support');
   }
   const adapter = await navigator.gpu.requestAdapter();
