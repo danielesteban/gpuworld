@@ -6,67 +6,35 @@ fn main(@location(0) position : vec4<f32>) -> @builtin(position) vec4<f32> {
 `;
 
 const Fragment = `
-struct Camera {
-  projection : mat4x4<f32>,
-  view : mat4x4<f32>,
-  position : vec3<f32>,
-  direction : vec3<f32>,
-}
+@group(0) @binding(0) var colorTexture : texture_2d<f32>;
+@group(0) @binding(1) var dataTexture : texture_2d<f32>;
 
-struct Effect {
-  color : vec3<f32>,
-  intensity : f32,
-  depthScale : f32,
-  normalScale : f32,
-}
-
-const effect : Effect = Effect(
-  vec3<f32>(0, 0, 0),
-  0.1,
-  0.5,
-  0.5,
-);
-
+const edgeColor : vec3<f32> = vec3<f32>(0, 0, 0);
+const edgeIntensity : f32 = 0.1;
+const depthScale : f32 = 0.5;
+const normalScale : f32 = 0.5;
 const offset : vec3<i32> = vec3<i32>(1, 1, 0);
 
-fn edgesDepth(pixel : vec2<i32>) -> f32 {
-  var pixelCenter : f32 = textureLoad(positionTexture, pixel, 0).w;
-  var pixelLeft : f32 = textureLoad(positionTexture, pixel - offset.xz, 0).w;
-  var pixelRight : f32 = textureLoad(positionTexture, pixel + offset.xz, 0).w;
-  var pixelUp : f32 = textureLoad(positionTexture, pixel + offset.zy, 0).w;
-  var pixelDown : f32 = textureLoad(positionTexture, pixel - offset.zy, 0).w;
-  return (
-    abs(pixelLeft    - pixelCenter) 
-    + abs(pixelRight - pixelCenter) 
-    + abs(pixelUp    - pixelCenter) 
-    + abs(pixelDown  - pixelCenter) 
-  ) * effect.depthScale;
-}
-
-fn edgesNormal(pixel : vec2<i32>) -> f32 {
-  var pixelCenter : vec3<f32> = textureLoad(normalTexture, pixel, 0).xyz;
-  var pixelLeft : vec3<f32> = textureLoad(normalTexture, pixel - offset.xz, 0).xyz;
-  var pixelRight : vec3<f32> = textureLoad(normalTexture, pixel + offset.xz, 0).xyz;
-  var pixelUp : vec3<f32> = textureLoad(normalTexture, pixel + offset.zy, 0).xyz;
-  var pixelDown : vec3<f32> = textureLoad(normalTexture, pixel - offset.zy, 0).xyz;
-  var edge : vec3<f32> = (
+fn edge(pixel : vec2<i32>) -> f32 {
+  var pixelCenter : vec4<f32> = textureLoad(dataTexture, pixel, 0);
+  var pixelLeft : vec4<f32> = textureLoad(dataTexture, pixel - offset.xz, 0);
+  var pixelRight : vec4<f32> = textureLoad(dataTexture, pixel + offset.xz, 0);
+  var pixelUp : vec4<f32> = textureLoad(dataTexture, pixel + offset.zy, 0);
+  var pixelDown : vec4<f32> = textureLoad(dataTexture, pixel - offset.zy, 0);
+  var edge : vec4<f32> = (
     abs(pixelLeft    - pixelCenter)
     + abs(pixelRight - pixelCenter) 
     + abs(pixelUp    - pixelCenter) 
     + abs(pixelDown  - pixelCenter)
   );
-  return (edge.x + edge.y + edge.z) * effect.normalScale;
+  return clamp(max((edge.x + edge.y + edge.z) * normalScale, edge.w * depthScale), 0, 1);
 }
-
-@group(0) @binding(0) var colorTexture : texture_2d<f32>;
-@group(0) @binding(1) var normalTexture : texture_2d<f32>;
-@group(0) @binding(2) var positionTexture : texture_2d<f32>;
 
 @fragment
 fn main(@builtin(position) uv : vec4<f32>) -> @location(0) vec4<f32> {
   var pixel : vec2<i32> = vec2<i32>(floor(uv.xy));
   var color : vec3<f32> = textureLoad(colorTexture, pixel, 0).xyz;
-  color = mix(color, effect.color, clamp(max(edgesDepth(pixel), edgesNormal(pixel)), 0, 1) * effect.intensity);
+  color = mix(color, edgeColor, edge(pixel) * edgeIntensity);
   return vec4<f32>(color, 1);
 }
 `;
@@ -133,7 +101,7 @@ class Postprocessing {
     });
   }
 
-  bindTextures([color, normal, position]) {
+  bindTextures([color, data]) {
     const { device, pipeline } = this;
     this.bindings = device.createBindGroup({
       layout: pipeline.getBindGroupLayout(0),
@@ -144,11 +112,7 @@ class Postprocessing {
         },
         {
           binding: 1,
-          resource: normal.resolveTarget,
-        },
-        {
-          binding: 2,
-          resource: position.resolveTarget,
+          resource: data.resolveTarget,
         },
       ],
     });

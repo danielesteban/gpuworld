@@ -32,11 +32,6 @@ class Renderer {
           loadOp: 'clear',
           storeOp: 'store',
         },
-        {
-          clearValue: { r: 0, g: 0, b: 0, a: 0 },
-          loadOp: 'clear',
-          storeOp: 'store',
-        }
       ],
       depthStencilAttachment: {
         depthClearValue: 1,
@@ -85,8 +80,7 @@ class Renderer {
     camera.updateProjection();
 
     this.updateTexture(descriptor.colorAttachments[0], 'rgba8unorm', 'color', size);
-    this.updateTexture(descriptor.colorAttachments[1], 'rgba16float', 'normal', size);
-    this.updateTexture(descriptor.colorAttachments[2], 'rgba16float', 'position', size);
+    this.updateTexture(descriptor.colorAttachments[1], 'rgba16float', 'data', size);
     this.updateTexture(descriptor.depthStencilAttachment, 'depth24plus', 'depth', size, false);
     postprocessing.bindTextures(descriptor.colorAttachments);
   }

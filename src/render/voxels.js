@@ -12,12 +12,11 @@ struct VertexInput {
 
 struct VertexOutput {
   @builtin(position) position : vec4<f32>,
-  @location(0) worldPosition : vec3<f32>,
-  @location(1) normal : vec3<f32>,
-  @location(2) uv : vec2<f32>,
-  @location(3) depth : f32,
-  @location(4) @interpolate(flat) light : vec3<f32>,
-  @location(5) @interpolate(flat) texture : i32,
+  @location(0) normal : vec3<f32>,
+  @location(1) uv : vec2<f32>,
+  @location(2) depth : f32,
+  @location(3) @interpolate(flat) light : vec3<f32>,
+  @location(4) @interpolate(flat) texture : i32,
 }
 
 struct Camera {
@@ -78,11 +77,9 @@ fn main(voxel : VertexInput) -> VertexOutput {
       rotation = rotateY(PI);
     }
   }
-  var position : vec4<f32> = vec4<f32>(rotation * voxel.position + voxel.origin, 1);
-  var mvPosition : vec4<f32> = camera.view * position;
+  var mvPosition : vec4<f32> = camera.view * vec4<f32>(rotation * voxel.position + voxel.origin, 1);
   var out : VertexOutput;
   out.position = camera.projection * mvPosition;
-  out.worldPosition = position.xyz;
   out.normal = normalize(rotation * faceNormal);
   out.uv = voxel.uv;
   out.depth = -mvPosition.z;
@@ -94,18 +91,16 @@ fn main(voxel : VertexInput) -> VertexOutput {
 
 const Fragment = `
 struct FragmentInput {
-  @location(0) position : vec3<f32>,
-  @location(1) normal : vec3<f32>,
-  @location(2) uv : vec2<f32>,
-  @location(3) depth : f32,
-  @location(4) @interpolate(flat) light : vec3<f32>,
-  @location(5) @interpolate(flat) texture : i32,
+  @location(0) normal : vec3<f32>,
+  @location(1) uv : vec2<f32>,
+  @location(2) depth : f32,
+  @location(3) @interpolate(flat) light : vec3<f32>,
+  @location(4) @interpolate(flat) texture : i32,
 }
 
 struct FragmentOutput {
   @location(0) color : vec4<f32>,
-  @location(1) normal : vec4<f32>,
-  @location(2) position : vec4<f32>,
+  @location(1) data : vec4<f32>,
 }
 
 @group(0) @binding(1) var atlas : texture_2d_array<f32>;
@@ -116,8 +111,7 @@ fn main(face : FragmentInput) -> FragmentOutput {
   var output : FragmentOutput;
   output.color = textureSample(atlas, atlasSampler, face.uv, face.texture);
   output.color *= vec4<f32>(face.light, 1);
-  output.normal = vec4<f32>(normalize(face.normal), 1);
-  output.position = vec4<f32>(face.position, face.depth);
+  output.data = vec4<f32>(normalize(face.normal), face.depth);
   return output;
 }
 `;
@@ -202,7 +196,6 @@ class Voxels {
         }),
         targets: [
           { format: 'rgba8unorm' },
-          { format: 'rgba16float' },
           { format: 'rgba16float' },
         ],
       },
