@@ -48,12 +48,13 @@ export default {
           )
       ),
     }),
-    copy({
-      targets: [{ src: 'screenshot.png', dest: 'dist' }],
-    }),
     ...(production ? [
       terser({ format: { comments: false } }),
+      copy({
+        targets: [{ src: 'screenshot.png', dest: 'dist' }],
+      }),
       {
+        name: 'cname',
         writeBundle() {
           fs.writeFileSync(path.join(outputPath, 'CNAME'), 'gpuworld.gatunes.com');
         },
