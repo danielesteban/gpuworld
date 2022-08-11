@@ -8,13 +8,13 @@ ${Chunk.compute({ chunkSize })}
 
 @compute @workgroup_size(4, 4, 4)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  var pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {
     return;
   }
-  var voxel = getVoxel(pos);
+  let voxel = getVoxel(pos);
   if (chunk.voxels[voxel] == 1 && chunk.voxels[getVoxel(pos + vec3<i32>(0, 1, 0))] == 0) {
     chunk.voxels[voxel] = 2;
   }

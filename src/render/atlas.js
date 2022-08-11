@@ -25,14 +25,14 @@ ${generator}
 
 @compute @workgroup_size(256)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  var id : i32 = i32(GlobalInvocationID.x);
+  let id : i32 = i32(GlobalInvocationID.x);
   if (id >= atlas.length) {
     return;
   }
-  var tex : i32 = id / atlas.stride;
-  var index : i32 = id - tex * atlas.stride;
-  var y : i32 = index / atlas.width;
-  var pixel : vec2<i32> = vec2<i32>(index - y * atlas.width, y);
+  let tex : i32 = id / atlas.stride;
+  let index : i32 = id - tex * atlas.stride;
+  let y : i32 = index / atlas.width;
+  let pixel : vec2<i32> = vec2<i32>(index - y * atlas.width, y);
   textureStore(texture, pixel, tex, getColorAt(tex, pixel));
 }
 `;

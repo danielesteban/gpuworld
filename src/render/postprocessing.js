@@ -16,12 +16,12 @@ const normalScale : f32 = 0.5;
 const offset : vec3<i32> = vec3<i32>(1, 1, 0);
 
 fn edge(pixel : vec2<i32>) -> f32 {
-  var pixelCenter : vec4<f32> = textureLoad(dataTexture, pixel, 0);
-  var pixelLeft : vec4<f32> = textureLoad(dataTexture, pixel - offset.xz, 0);
-  var pixelRight : vec4<f32> = textureLoad(dataTexture, pixel + offset.xz, 0);
-  var pixelUp : vec4<f32> = textureLoad(dataTexture, pixel + offset.zy, 0);
-  var pixelDown : vec4<f32> = textureLoad(dataTexture, pixel - offset.zy, 0);
-  var edge : vec4<f32> = (
+  let pixelCenter : vec4<f32> = textureLoad(dataTexture, pixel, 0);
+  let pixelLeft : vec4<f32> = textureLoad(dataTexture, pixel - offset.xz, 0);
+  let pixelRight : vec4<f32> = textureLoad(dataTexture, pixel + offset.xz, 0);
+  let pixelUp : vec4<f32> = textureLoad(dataTexture, pixel + offset.zy, 0);
+  let pixelDown : vec4<f32> = textureLoad(dataTexture, pixel - offset.zy, 0);
+  let edge : vec4<f32> = (
     abs(pixelLeft    - pixelCenter)
     + abs(pixelRight - pixelCenter) 
     + abs(pixelUp    - pixelCenter) 
@@ -32,7 +32,7 @@ fn edge(pixel : vec2<i32>) -> f32 {
 
 @fragment
 fn main(@builtin(position) uv : vec4<f32>) -> @location(0) vec4<f32> {
-  var pixel : vec2<i32> = vec2<i32>(floor(uv.xy));
+  let pixel : vec2<i32> = vec2<i32>(floor(uv.xy));
   var color : vec3<f32> = textureLoad(colorTexture, pixel, 0).xyz;
   color = mix(color, edgeColor, edge(pixel) * edgeIntensity);
   return vec4<f32>(color, 1);

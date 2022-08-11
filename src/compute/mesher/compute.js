@@ -88,10 +88,10 @@ fn getLightAvg(pos : vec3<i32>, u : vec3<i32>, v : vec3<i32>) -> f32 {
   var level : f32;
   var count : i32;
   for (var n : i32 = 0; n < 5; n++) {
-    var nuv = neighbors[n];
-    var npos : vec3<i32> = pos + u * nuv.x + v * nuv.y;
+    let nuv = neighbors[n];
+    let npos : vec3<i32> = pos + u * nuv.x + v * nuv.y;
     if (n == 0 || isAir(npos)) {
-      var nlight : u32 = getLight(npos);
+      let nlight : u32 = getLight(npos);
       if (nlight != 0) {
         level += f32(nlight);
         count++;
@@ -115,7 +115,7 @@ fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {
   if (light == 0) {
     return;
   }
-  var offset : u32 = atomicAdd(&(faces.instanceCount), 1) * 6;
+  let offset : u32 = atomicAdd(&(faces.instanceCount), 1) * 6;
   faces.data[offset] = f32(pos.x) + 0.5;
   faces.data[offset + 1] = f32(pos.y) + 0.5;
   faces.data[offset + 2] = f32(pos.z) + 0.5;
@@ -126,16 +126,16 @@ fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {
 
 @compute @workgroup_size(4, 4, 4)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  var pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {
     return;
   }
-  var value : u32 = chunk.voxels[getVoxel(pos)];
+  let value : u32 = chunk.voxels[getVoxel(pos)];
   if (value != 0) {
     for (var face : i32 = 0; face < 6; face++) {
-      var npos : vec3<i32> = pos + faceNormals[face].f;
+      let npos : vec3<i32> = pos + faceNormals[face].f;
       if (isAir(npos)) {
         pushFace(
           position + pos,

@@ -13,7 +13,7 @@ fn update(index : i32, plane : vec4<f32>) {
 
 @compute @workgroup_size(1)
 fn main() {
-  var m : mat4x4<f32> = camera.projection * camera.view;
+  let m : mat4x4<f32> = camera.projection * camera.view;
   update(0, vec4<f32>(m[0].w - m[0].x, m[1].w - m[1].x, m[2].w - m[2].x, m[3].w - m[3].x));
   update(1, vec4<f32>(m[0].w + m[0].x, m[1].w + m[1].x, m[2].w + m[2].x, m[3].w + m[3].x));
   update(2, vec4<f32>(m[0].w + m[0].y, m[1].w + m[1].y, m[2].w + m[2].y, m[3].w + m[3].y));

@@ -29,8 +29,8 @@ const sunlightColor : vec3<f32> = vec3<f32>(0.9, 0.8, 0.4);
 const PI : f32 = 3.141592653589793;
 
 fn rotateX(rad : f32) -> mat3x3<f32> {
-  var c : f32 = cos(rad);
-  var s : f32 = sin(rad);
+  let c : f32 = cos(rad);
+  let s : f32 = sin(rad);
   return mat3x3<f32>(
     1, 0, 0,
     0, c, s,
@@ -39,8 +39,8 @@ fn rotateX(rad : f32) -> mat3x3<f32> {
 }
 
 fn rotateY(rad : f32) -> mat3x3<f32> {
-  var c : f32 = cos(rad);
-  var s : f32 = sin(rad);
+  let c : f32 = cos(rad);
+  let s : f32 = sin(rad);
   return mat3x3<f32>(
     c, 0, -s,
     0, 1, 0,
@@ -77,7 +77,7 @@ fn main(voxel : VertexInput) -> VertexOutput {
       rotation = rotateY(PI);
     }
   }
-  var mvPosition : vec4<f32> = camera.view * vec4<f32>(rotation * voxel.position + voxel.origin, 1);
+  let mvPosition : vec4<f32> = camera.view * vec4<f32>(rotation * voxel.position + voxel.origin, 1);
   var out : VertexOutput;
   out.position = camera.projection * mvPosition;
   out.normal = normalize(rotation * faceNormal);

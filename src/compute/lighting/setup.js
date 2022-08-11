@@ -14,7 +14,7 @@ struct Uniforms {
 
 @compute @workgroup_size(1)
 fn main() {
-  var count : u32 = chunk.queues[chunk.queue].count;
+  let count : u32 = chunk.queues[chunk.queue].count;
   if (count == 0) {
     workgroups[0] = 0;
     return;
@@ -27,7 +27,7 @@ fn main() {
   workgroups[1] = 1;
   workgroups[2] = 1;
 
-  var next : u32 = (chunk.queue + 1) % 2;
+  let next : u32 = (chunk.queue + 1) % 2;
   chunk.queue = next;
   chunk.queues[next].count = 0;
 

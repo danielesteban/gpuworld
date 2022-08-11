@@ -23,7 +23,7 @@ fn FBM(p : vec3<f32>) -> f32 {
 
 @compute @workgroup_size(4, 4, 4)
 fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  var pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {
@@ -31,13 +31,13 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   }
 
   if (pos.y == chunkSize.y - 1) {
-    var voxel = getVoxel(pos);
+    let voxel = getVoxel(pos);
     chunk.light[voxel] = maxLight;
     chunk.queues[chunk.queue].data[atomicAdd(&(chunk.queues[chunk.queue].count), 1)] = voxel;
     return;
   }
 
-  var wpos = vec3<f32>(position + pos);
+  let wpos = vec3<f32>(position + pos);
   if (wpos.y == 0 || wpos.y <= abs(FBM(wpos * 0.02) + 0.2) * f32(chunkSize.y) * 1.5) {
     chunk.voxels[getVoxel(pos)] = 1;
     atomicMin(&chunk.bounds.min[0], u32(pos.x)); 

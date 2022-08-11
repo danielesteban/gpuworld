@@ -20,7 +20,7 @@ fn flood(pos : vec3<i32>, level : u32) {
   // and a single logic block but I couldn't manage to
   // pass a ptr<storage, Chunk, read_write> to a function
   if (pos.x == -1) {
-    var voxel : u32 = getVoxel(vec3<i32>(chunkSize.x - 1, pos.y, pos.z));
+    let voxel : u32 = getVoxel(vec3<i32>(chunkSize.x - 1, pos.y, pos.z));
     if (chunk_west.voxels[voxel] != 0) {
       chunk_west.remesh = 1;
       return;
@@ -31,7 +31,7 @@ fn flood(pos : vec3<i32>, level : u32) {
     return;
   }
   if (pos.x == chunkSize.x) {
-    var voxel : u32 = getVoxel(vec3<i32>(0, pos.y, pos.z));
+    let voxel : u32 = getVoxel(vec3<i32>(0, pos.y, pos.z));
     if (chunk_east.voxels[voxel] != 0) {
       chunk_east.remesh = 1;
       return;
@@ -42,7 +42,7 @@ fn flood(pos : vec3<i32>, level : u32) {
     return;
   }
   if (pos.z == -1) {
-    var voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, chunkSize.z - 1));
+    let voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, chunkSize.z - 1));
     if (chunk_south.voxels[voxel] != 0) {
       chunk_south.remesh = 1;
       return;
@@ -53,7 +53,7 @@ fn flood(pos : vec3<i32>, level : u32) {
     return;
   }
   if (pos.z == chunkSize.z) {
-    var voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, 0));
+    let voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, 0));
     if (chunk_north.voxels[voxel] != 0) {
       chunk_north.remesh = 1;
       return;
@@ -63,7 +63,7 @@ fn flood(pos : vec3<i32>, level : u32) {
     }
     return;
   }
-  var voxel : u32 = getVoxel(pos);
+  let voxel : u32 = getVoxel(pos);
   if (chunk.voxels[voxel] != 0) {
     return;
   }
@@ -86,11 +86,11 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   if (GlobalInvocationID.x >= uniforms.count) {
     return;
   }
-  var voxel : u32 = chunk.queues[uniforms.queue].data[GlobalInvocationID.x];
-  var light : u32 = atomicLoad(&chunk.light[voxel]);
-  var pos : vec3<i32> = getPos(voxel);
+  let voxel : u32 = chunk.queues[uniforms.queue].data[GlobalInvocationID.x];
+  let light : u32 = atomicLoad(&chunk.light[voxel]);
+  let pos : vec3<i32> = getPos(voxel);
   for (var n : i32 = 0; n < 6; n++) {
-    var npos = pos + neighbors[n];
+    let npos = pos + neighbors[n];
     if (npos.y == -1 || npos.y == chunkSize.y) {
       continue;
     }

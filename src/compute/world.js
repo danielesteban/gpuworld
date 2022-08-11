@@ -88,7 +88,7 @@ class World {
       for (let z = -radius; z <= radius; z++) {
         for (let x = -radius; x <= radius; x++) {
           vec2.set(_position, x, z);
-          var distance = vec2.length(_position);
+          const distance = vec2.length(_position);
           if (distance <= (radius - 0.5)) {
             grid.push({ distance, position: vec2.clone(_position)});
           }
