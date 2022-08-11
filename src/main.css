@@ -1,3 +1,7 @@
+:root {
+  font-size: 16px;
+}
+
 body {
   margin: 0;
   background: #000;
@@ -7,6 +11,7 @@ body {
   overflow: hidden;
   font-family: monospace;
   font-size: 0.75rem;
+  line-height: 1rem;
 }
 
 canvas {
@@ -25,7 +30,7 @@ canvas {
   display: block;
 }
 
-#canary > a {
+#canary > a, #info > a {
   color: inherit;
 }
 
@@ -35,18 +40,6 @@ canvas {
   right: 1rem;
   text-align: right;
   opacity: 0.6;
-}
-
-#info > a {
-  color: inherit;
-}
-
-#renderer {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 100vw;
-  height: 100vh;
 }
 
 #ribbon {
