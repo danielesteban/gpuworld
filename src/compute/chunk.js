@@ -11,9 +11,7 @@ class Chunk {
         // bounds
         6
         // voxels
-        + chunkSize.x * chunkSize.y * chunkSize.z
-        // light
-        + chunkSize.x * chunkSize.y * chunkSize.z
+        + chunkSize.x * chunkSize.y * chunkSize.z * 2
         // remesh
         + 1
         // queue
@@ -88,10 +86,14 @@ Chunk.compute = ({
     data : array<u32, ${chunkSize.x * chunkSize.z * 3}>,
   }
 
+  struct Voxel {
+    value : u32,
+    light : ${atomicLight ? 'atomic<u32>' : 'u32'},
+  }
+
   struct Chunk {
     bounds : Bounds,
-    voxels : array<u32, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
-    light : array<${atomicLight ? 'atomic<u32>' : 'u32'}, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
+    voxels : array<Voxel, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
     remesh : u32,
     queue : u32,
     queues : array<Queue, 2>,

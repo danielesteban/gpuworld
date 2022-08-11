@@ -32,14 +32,14 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
   if (pos.y == chunkSize.y - 1) {
     let voxel = getVoxel(pos);
-    chunk.light[voxel] = maxLight;
+    chunk.voxels[voxel].light = maxLight;
     chunk.queues[chunk.queue].data[atomicAdd(&(chunk.queues[chunk.queue].count), 1)] = voxel;
     return;
   }
 
   let wpos = vec3<f32>(position + pos);
   if (wpos.y == 0 || wpos.y <= abs(FBM(wpos * 0.02) + 0.2) * f32(chunkSize.y) * 1.5) {
-    chunk.voxels[getVoxel(pos)] = 1;
+    chunk.voxels[getVoxel(pos)].value = 1;
     atomicMin(&chunk.bounds.min[0], u32(pos.x)); 
     atomicMin(&chunk.bounds.min[1], u32(pos.y)); 
     atomicMin(&chunk.bounds.min[2], u32(pos.z));

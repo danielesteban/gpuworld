@@ -21,53 +21,53 @@ fn flood(pos : vec3<i32>, level : u32) {
   // pass a ptr<storage, Chunk, read_write> to a function
   if (pos.x == -1) {
     let voxel : u32 = getVoxel(vec3<i32>(chunkSize.x - 1, pos.y, pos.z));
-    if (chunk_west.voxels[voxel] != 0) {
+    if (chunk_west.voxels[voxel].value != 0) {
       chunk_west.remesh = 1;
       return;
     }
-    if (atomicMax(&chunk_west.light[voxel], level) < level) {
+    if (atomicMax(&chunk_west.voxels[voxel].light, level) < level) {
       chunk_west.queues[chunk_west.queue].data[atomicAdd(&(chunk_west.queues[chunk_west.queue].count), 1)] = voxel;
     }
     return;
   }
   if (pos.x == chunkSize.x) {
     let voxel : u32 = getVoxel(vec3<i32>(0, pos.y, pos.z));
-    if (chunk_east.voxels[voxel] != 0) {
+    if (chunk_east.voxels[voxel].value != 0) {
       chunk_east.remesh = 1;
       return;
     }
-    if (atomicMax(&chunk_east.light[voxel], level) < level) {
+    if (atomicMax(&chunk_east.voxels[voxel].light, level) < level) {
       chunk_east.queues[chunk_east.queue].data[atomicAdd(&(chunk_east.queues[chunk_east.queue].count), 1)] = voxel;
     }
     return;
   }
   if (pos.z == -1) {
     let voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, chunkSize.z - 1));
-    if (chunk_south.voxels[voxel] != 0) {
+    if (chunk_south.voxels[voxel].value != 0) {
       chunk_south.remesh = 1;
       return;
     }
-    if (atomicMax(&chunk_south.light[voxel], level) < level) {
+    if (atomicMax(&chunk_south.voxels[voxel].light, level) < level) {
       chunk_south.queues[chunk_south.queue].data[atomicAdd(&(chunk_south.queues[chunk_south.queue].count), 1)] = voxel;
     }
     return;
   }
   if (pos.z == chunkSize.z) {
     let voxel : u32 = getVoxel(vec3<i32>(pos.x, pos.y, 0));
-    if (chunk_north.voxels[voxel] != 0) {
+    if (chunk_north.voxels[voxel].value != 0) {
       chunk_north.remesh = 1;
       return;
     }
-    if (atomicMax(&chunk_north.light[voxel], level) < level) {
+    if (atomicMax(&chunk_north.voxels[voxel].light, level) < level) {
       chunk_north.queues[chunk_north.queue].data[atomicAdd(&(chunk_north.queues[chunk_north.queue].count), 1)] = voxel;
     }
     return;
   }
   let voxel : u32 = getVoxel(pos);
-  if (chunk.voxels[voxel] != 0) {
+  if (chunk.voxels[voxel].value != 0) {
     return;
   }
-  if (atomicMax(&chunk.light[voxel], level) < level) {
+  if (atomicMax(&chunk.voxels[voxel].light, level) < level) {
     chunk.queues[chunk.queue].data[atomicAdd(&(chunk.queues[chunk.queue].count), 1)] = voxel;
   }
 }
@@ -87,7 +87,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     return;
   }
   let voxel : u32 = chunk.queues[uniforms.queue].data[GlobalInvocationID.x];
-  let light : u32 = atomicLoad(&chunk.light[voxel]);
+  let light : u32 = atomicLoad(&chunk.voxels[voxel].light);
   let pos : vec3<i32> = getPos(voxel);
   for (var n : i32 = 0; n < 6; n++) {
     let npos = pos + neighbors[n];

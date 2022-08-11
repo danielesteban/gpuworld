@@ -15,8 +15,8 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
     return;
   }
   let voxel = getVoxel(pos);
-  if (chunk.voxels[voxel] == 1 && chunk.voxels[getVoxel(pos + vec3<i32>(0, 1, 0))] == 0) {
-    chunk.voxels[voxel] = 2;
+  if (chunk.voxels[voxel].value == 1 && chunk.voxels[getVoxel(pos + vec3<i32>(0, 1, 0))].value == 0) {
+    chunk.voxels[voxel].value = 2;
   }
 }
 `;
