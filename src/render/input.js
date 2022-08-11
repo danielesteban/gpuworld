@@ -1,10 +1,13 @@
 import { vec2, vec3 } from 'gl-matrix';
 
 const _direction = vec3.create();
+const _look = vec2.create();
+const _movement = vec3.create();
 
 class Input {
   constructor({ position, target }) {
     this.target = target;
+    this.gamepad = null;
     this.keyboard = vec3.create();
     this.pointer = {
       movement: vec2.create(),
@@ -28,6 +31,8 @@ class Input {
       worldUp: vec3.fromValues(0, 1, 0),
     };
     target.addEventListener('contextmenu', this.onContextMenu.bind(this), false);
+    window.addEventListener('gamepaddisconnected', this.onGamepadDisconnected.bind(this), false);
+    window.addEventListener('gamepadconnected', this.onGamepadConnected.bind(this), false);
     window.addEventListener('keydown', this.onKeyDown.bind(this), false);
     window.addEventListener('keyup', this.onKeyUp.bind(this), false);
     target.addEventListener('mousedown', this.onMouseDown.bind(this), false);
@@ -53,6 +58,17 @@ class Input {
 
   onContextMenu(e) {
     e.preventDefault();
+  }
+
+  onGamepadDisconnected({ gamepad: { index } }) {
+    const { gamepad } = this;
+    if (gamepad === index) {
+      this.gamepad = null;
+    }
+  }
+
+  onGamepadConnected({ gamepad: { index } }) {
+    this.gamepad = index;
   }
 
   onKeyDown({ key, repeat, target }) {
@@ -128,8 +144,8 @@ class Input {
     if (!isLocked) {
       return;
     }
-    movement[0] -= movementX * sensitivity.look;
-    movement[1] += movementY * sensitivity.look;
+    movement[0] -= movementX * sensitivity.pointer;
+    movement[1] += movementY * sensitivity.pointer;
     vec2.set(
       position,
       (clientX / window.innerWidth) * 2 - 1,
@@ -155,7 +171,7 @@ class Input {
     }
     const logSpeed = Math.min(
       Math.max(
-        ((Math.log(speed.target) - minSpeed) / speedRange) - (e.deltaY * sensitivity.speed),
+        ((Math.log(speed.target) - minSpeed) / speedRange) - (e.deltaY * sensitivity.wheel),
         0
       ),
       1
@@ -173,16 +189,29 @@ class Input {
   }
 
   update(delta) {
-    const { minPhi, maxPhi } = Input;
-    const { isLocked, keyboard, pointer, look, position, speed, vectors } = this;
+    const { minPhi, maxPhi, sensitivity } = Input;
+    const { isLocked, gamepad, keyboard, pointer, look, position, speed, vectors } = this;
+
     if (isLocked) {
-      look.target[1] += pointer.movement[0];
-      look.target[0] = Math.min(Math.max(look.target[0] + pointer.movement[1], minPhi), maxPhi);
+      vec3.copy(_movement, keyboard);
+      vec2.copy(_look, pointer.movement);
+      if (gamepad !== null) {
+        const { axes } = navigator.getGamepads()[gamepad];
+        if (Math.max(Math.abs(axes[2]), Math.abs(axes[3])) > 0.1) {
+          vec2.set(_look, -axes[2] * sensitivity.gamepad, -axes[3] * sensitivity.gamepad);
+        }
+        if (Math.max(Math.abs(axes[0]), Math.abs(axes[1])) > 0.1) {
+          vec3.set(_movement, axes[0], 0, -axes[1]);
+        }
+      }
+      look.target[0] = Math.min(Math.max(look.target[0] + _look[1], minPhi), maxPhi);
+      look.target[1] += _look[0];
     }
+    vec2.set(pointer.movement, 0, 0);
+
     const damp = 1 - Math.exp(-20 * delta);
     vec2.lerp(look.state, look.state, look.target, damp);
     speed.state = speed.state * (1 - damp) + speed.target * damp;
-    vec2.set(pointer.movement, 0, 0);
 
     vec3.set(
       vectors.forward,
@@ -192,11 +221,11 @@ class Input {
     );
     vec3.cross(vectors.right, vectors.forward, vectors.worldUp);
 
-    if (keyboard[0] !== 0 || keyboard[1] !== 0 || keyboard[2] !== 0) {
+    if (_movement[0] !== 0 || _movement[1] !== 0 || _movement[2] !== 0) {
       vec3.set(_direction, 0, 0, 0);
-      vec3.scaleAndAdd(_direction, _direction, vectors.right, keyboard[0]);
-      vec3.scaleAndAdd(_direction, _direction, vectors.worldUp, keyboard[1]);
-      vec3.scaleAndAdd(_direction, _direction, vectors.forward, keyboard[2]);
+      vec3.scaleAndAdd(_direction, _direction, vectors.right, _movement[0]);
+      vec3.scaleAndAdd(_direction, _direction, vectors.worldUp, _movement[1]);
+      vec3.scaleAndAdd(_direction, _direction, vectors.forward, _movement[2]);
       vec3.normalize(_direction, _direction);
       vec3.scaleAndAdd(
         position.target,
@@ -204,14 +233,16 @@ class Input {
         _direction,
         delta * speed.state
       );
+      vec3.set(_movement, 0, 0, 0);
     }
     vec3.lerp(position.state, position.state, position.target, 1 - Math.exp(-10 * delta));
   }
 }
 
 Input.sensitivity = {
-  look: 0.003,
-  speed: 0.0003,
+  gamepad: 0.03,
+  pointer: 0.003,
+  wheel: 0.0003,
 };
 Input.minPhi = 0.01;
 Input.maxPhi = Math.PI - 0.01;
