@@ -78,13 +78,23 @@ fn getLight(pos : vec3<i32>, u : vec3<i32>, v : vec3<i32>) -> f32 {
 }
 
 fn getTexture(face : i32, value : u32) -> i32 {
-  if (value == 1 || face == 2) {
-    return 0;
+  switch (value) {
+    default {
+      return 0;
+    }
+    case 2 {
+      return 1; 
+    }
+    case 3 {
+      if (face == 1) {
+        return 2;
+      }
+      if (face == 2) {
+        return 1;
+      }
+      return 3;
+    }
   }
-  if (value == 2 && face == 1) {
-    return 1;
-  }
-  return 2;
 }
 
 fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {

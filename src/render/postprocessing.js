@@ -10,9 +10,9 @@ const Fragment = `
 @group(0) @binding(1) var dataTexture : texture_2d<f32>;
 
 const edgeColor : vec3<f32> = vec3<f32>(0, 0, 0);
-const edgeIntensity : f32 = 0.1;
-const depthScale : f32 = 0.5;
-const normalScale : f32 = 0.5;
+const edgeIntensity : f32 = 0.2;
+const depthScale : f32 = 0.4;
+const normalScale : f32 = 0.4;
 const offset : vec3<i32> = vec3<i32>(1, 1, 0);
 
 fn edge(pixel : vec2<i32>) -> f32 {

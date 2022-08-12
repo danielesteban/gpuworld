@@ -25,7 +25,6 @@ struct Camera {
 }
 
 const faceNormal : vec3<f32> = vec3<f32>(0, 0, 1);
-const sunlightColor : vec3<f32> = vec3<f32>(0.9, 0.8, 0.4);
 const PI : f32 = 3.141592653589793;
 
 fn rotateX(rad : f32) -> mat3x3<f32> {
@@ -49,6 +48,7 @@ fn rotateY(rad : f32) -> mat3x3<f32> {
 }
 
 @group(0) @binding(0) var<uniform> camera : Camera;
+@group(0) @binding(1) var<uniform> sunlight : vec3<f32>;
 
 @vertex
 fn main(voxel : VertexInput) -> VertexOutput {
@@ -83,7 +83,7 @@ fn main(voxel : VertexInput) -> VertexOutput {
   out.normal = normalize(rotation * faceNormal);
   out.uv = voxel.uv;
   out.depth = -mvPosition.z;
-  out.light = sunlightColor * pow(voxel.light, 8);
+  out.light = sunlight * pow(voxel.light, 8);
   out.texture = i32(voxel.texture);
   return out;
 }
@@ -103,8 +103,8 @@ struct FragmentOutput {
   @location(1) data : vec4<f32>,
 }
 
-@group(0) @binding(1) var atlas : texture_2d_array<f32>;
-@group(0) @binding(2) var atlasSampler : sampler;
+@group(0) @binding(2) var atlas : texture_2d_array<f32>;
+@group(0) @binding(3) var atlasSampler : sampler;
 
 @fragment
 fn main(face : FragmentInput) -> FragmentOutput {
@@ -135,7 +135,7 @@ const Face = (device) => {
 };
 
 class Voxels {
-  constructor({ camera, device, samples }) {
+  constructor({ camera, device, samples, sunlight }) {
     this.atlas = new Atlas({ device });
     this.geometry = Face(device);
     this.pipeline = device.createRenderPipeline({
@@ -221,10 +221,14 @@ class Voxels {
         },
         {
           binding: 1,
-          resource: this.atlas.texture.createView(),
+          resource: { buffer: sunlight.buffer },
         },
         {
           binding: 2,
+          resource: this.atlas.texture.createView(),
+        },
+        {
+          binding: 3,
           resource: device.createSampler(),
         },
       ],

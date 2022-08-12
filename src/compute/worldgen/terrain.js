@@ -39,12 +39,18 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
   let wpos = vec3<f32>(position + pos);
   if (wpos.y == 0 || wpos.y <= abs(FBM(wpos * 0.02) + 0.2) * f32(chunkSize.y) * 1.5) {
-    chunk.voxels[getVoxel(pos)].value = 1;
-    atomicMin(&chunk.bounds.min[0], u32(pos.x)); 
-    atomicMin(&chunk.bounds.min[1], u32(pos.y)); 
+    var value : u32;
+    if (abs(FBM(wpos.yzx * vec3<f32>(0.01, 0.04, 0.01))) > 0.4) {
+      value = 1;
+    } else {
+      value = 2;
+    }
+    chunk.voxels[getVoxel(pos)].value = value;
+    atomicMin(&chunk.bounds.min[0], u32(pos.x));
+    atomicMin(&chunk.bounds.min[1], u32(pos.y));
     atomicMin(&chunk.bounds.min[2], u32(pos.z));
-    atomicMax(&chunk.bounds.max[0], u32(pos.x) + 1); 
-    atomicMax(&chunk.bounds.max[1], u32(pos.y) + 1); 
+    atomicMax(&chunk.bounds.max[0], u32(pos.x) + 1);
+    atomicMax(&chunk.bounds.max[1], u32(pos.y) + 1);
     atomicMax(&chunk.bounds.max[2], u32(pos.z) + 1);
   }
 }

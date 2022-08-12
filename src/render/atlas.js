@@ -38,16 +38,34 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 `;
 
 const DefaultGenerator = `
+const stone : vec3<f32> = vec3<f32>(0.6, 0.6, 0.8);
+const dirt : vec4<f32> = vec4<f32>(1.0, 1.0, 1.0, 1.0);
+const grass : vec4<f32> = vec4<f32>(0.6, 1.0, 0.6, 1.0);
 fn getColorAt(texture : i32, pixel : vec2<i32>) -> vec4<f32> {
-  if (texture == 0 || (texture == 2 && pixel.y > 4 - i32(4 * noise3(vec3<f32>(vec2<f32>(pixel), 0))))) {
-    return vec4<f32>(1);
+  switch (texture) {
+    default {
+      var n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(0.75, 1), 0)) - 0.5, 0) - 0.5) * 0.1;
+      return vec4<f32>(stone + n, 1.0);
+    }
+    case 1 {
+      return dirt;
+    }
+    case 2 {
+      var n = (max(noise3(vec3<f32>(vec2<f32>(pixel), 0)) - 0.5, 0) - 0.5) * 0.1;
+      return vec4<f32>(grass.xyz + n, 1.0);
+    }
+    case 3 {
+      if (pixel.y > 4 - i32(4 * noise3(vec3<f32>(vec2<f32>(pixel), 0)))) {
+        return dirt;
+      }
+      return grass;
+    }
   }
-  return vec4<f32>(0.6, 1.0, 0.6, 1.0);
 }
 `;
 
 class Atlas {
-  constructor({ device, count = 3, width = 16, height = 16 }) {
+  constructor({ device, count = 4, width = 16, height = 16 }) {
     this.device = device;
     this.count = count;
     this.width = width;

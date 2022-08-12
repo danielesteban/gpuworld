@@ -55,7 +55,8 @@ const Main = ({ adapter, device }) => {
     device.queue.submit([command.finish()]);
   };
 
-  renderer.setClearColor(0.2, 0.6, 0.6);
+  renderer.setBackground(0.2, 0.6, 0.6);
+  renderer.setSunlight(1, 1, 0.6);
   renderer.voxels.atlas.compute();
   renderer.voxels.atlas.setupDragAndDrop();
   requestAnimationFrame(animate);
