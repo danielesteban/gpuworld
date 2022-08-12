@@ -2,6 +2,7 @@ import './main.css';
 import { vec2, vec3 } from 'gl-matrix';
 import Camera from './render/camera.js';
 import Input from './render/input.js';
+import Light from './render/light.js';
 import Renderer from './render/renderer.js';
 import World from './compute/world.js';
 
@@ -27,6 +28,8 @@ const Main = ({ adapter, device }) => {
     target: renderer.canvas,
   });
 
+  const light = new Light({ renderer });
+
   const anchor = vec2.create();
   const chunk = vec2.fromValues(world.chunkSize.x, world.chunkSize.z);
   const current = vec2.fromValues(-1, -1);
@@ -39,6 +42,7 @@ const Main = ({ adapter, device }) => {
     clock = time;
 
     input.update(delta);
+    light.update(delta);
 
     vec2.floor(anchor, vec2.divide(anchor, vec2.set(anchor, camera.position[0], camera.position[2]), chunk));
     if (!vec2.equals(current, anchor)) {
@@ -55,8 +59,6 @@ const Main = ({ adapter, device }) => {
     device.queue.submit([command.finish()]);
   };
 
-  renderer.setBackground(0.2, 0.6, 0.6);
-  renderer.setSunlight(1, 1, 0.6);
   renderer.voxels.atlas.compute();
   renderer.voxels.atlas.setupDragAndDrop();
   requestAnimationFrame(animate);

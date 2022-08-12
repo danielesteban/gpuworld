@@ -42,6 +42,43 @@ canvas {
   opacity: 0.6;
 }
 
+#light {
+  position: absolute;
+  bottom: 1rem;
+  left: 1rem;
+  display: flex;
+}
+
+#light > svg {
+  box-shadow: 0 0 4px rgba(0, 0, 0, .5);
+  padding: 0.5rem 1rem;
+  width: 24px;
+  height: 24px;
+  background-color: #000;
+  cursor: pointer;
+  transition: background-color ease-out .3s;
+}
+
+#light > svg:nth-child(1) {
+  border-radius: 16px 0 0 16px;
+  padding-right: 0.75rem;
+}
+
+#light > svg:nth-child(2) {
+  border-radius: 0 16px 16px 0;
+  padding-left: 0.75rem;
+}
+
+#light.day > svg:nth-child(1) {
+  background: #aa0;
+  cursor: default;
+}
+
+#light.night > svg:nth-child(2) {
+  background: #00a;
+  cursor: default;
+}
+
 #ribbon {
   width: 12.1em;
   height: 12.1em;
