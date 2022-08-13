@@ -85,6 +85,10 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
         ) {
           continue;
         }
+        if (npos.y == 0) {
+          state[id.x].state = 0;
+          continue;
+        }
         let voxel : u32 = getVoxel(npos);
         if (atomicMin(&chunk.voxels[voxel].value, 0) != 0) {
           state[id.x].state = 2;
