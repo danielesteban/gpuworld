@@ -5,28 +5,31 @@ class Chunk {
     this.bindings = {};
     this.position = vec2.clone(position);
 
-    this.data = device.createBuffer({
+    this.bounds = device.createBuffer({
       mappedAtCreation: true,
-      size: (
-        // bounds
-        6
-        // voxels
-        + chunkSize.x * chunkSize.y * chunkSize.z * 2
-        // remesh
-        + 1
-        // queue
-        + 1
-        // queues
-        + (1 + chunkSize.x * chunkSize.z * 3) * 2
-      ) * Uint32Array.BYTES_PER_ELEMENT,
+      size: 6 * Uint32Array.BYTES_PER_ELEMENT,
       usage: GPUBufferUsage.STORAGE,
     });
-    new Uint32Array(this.data.getMappedRange(0, 3 * Uint32Array.BYTES_PER_ELEMENT)).set([
+    new Uint32Array(this.bounds.getMappedRange()).set([
       chunkSize.x,
       chunkSize.y,
       chunkSize.z,
     ]);
-    this.data.unmap();
+    this.bounds.unmap();
+
+    this.data = device.createBuffer({
+      size: (
+        // voxels
+        chunkSize.x * chunkSize.y * chunkSize.z * 2
+        // queues
+        + (1 + chunkSize.x * chunkSize.z * 3) * 2
+        // queue
+        + 1
+        // remesh
+        + 1
+      ) * Uint32Array.BYTES_PER_ELEMENT,
+      usage: GPUBufferUsage.STORAGE,
+    });
 
     this.faces = device.createBuffer({
       size: (
@@ -61,8 +64,9 @@ class Chunk {
 Chunk.compute = ({
   atomicBounds,
   atomicInstanceCount,
-  atomicLight,
   atomicQueueCount,
+  atomicLight,
+  atomicValue,
   chunkSize,
 }) => `
   const chunkSize : vec3<i32> = vec3<i32>(${chunkSize.x}, ${chunkSize.y}, ${chunkSize.z});
@@ -87,16 +91,15 @@ Chunk.compute = ({
   }
 
   struct Voxel {
-    value : u32,
+    value : ${atomicValue ? 'atomic<u32>' : 'u32'},
     light : ${atomicLight ? 'atomic<u32>' : 'u32'},
   }
 
   struct Chunk {
-    bounds : Bounds,
     voxels : array<Voxel, ${chunkSize.x * chunkSize.y * chunkSize.z}>,
-    remesh : u32,
-    queue : u32,
     queues : array<Queue, 2>,
+    queue : u32,
+    remesh : u32,
   }
 
   fn getVoxel(pos : vec3<i32>) -> u32 {

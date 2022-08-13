@@ -18,12 +18,13 @@ fn FBM(p : vec3<f32>) -> f32 {
   return value;
 }
 
-@group(0) @binding(0) var<storage, read_write> chunk : Chunk;
-@group(0) @binding(1) var<uniform> position : vec3<i32>;
+@group(0) @binding(0) var<storage, read_write> bounds : Bounds;
+@group(0) @binding(1) var<storage, read_write> chunk : Chunk;
+@group(0) @binding(2) var<uniform> position : vec3<i32>;
 
 @compute @workgroup_size(4, 4, 4)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+  let pos : vec3<i32> = vec3<i32>(id.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {
@@ -33,7 +34,7 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
   if (pos.y == chunkSize.y - 1) {
     let voxel = getVoxel(pos);
     chunk.voxels[voxel].light = maxLight;
-    chunk.queues[chunk.queue].data[atomicAdd(&(chunk.queues[chunk.queue].count), 1)] = voxel;
+    chunk.queues[chunk.queue].data[atomicAdd(&chunk.queues[chunk.queue].count, 1)] = voxel;
     return;
   }
 
@@ -46,12 +47,12 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
       value = 2;
     }
     chunk.voxels[getVoxel(pos)].value = value;
-    atomicMin(&chunk.bounds.min[0], u32(pos.x));
-    atomicMin(&chunk.bounds.min[1], u32(pos.y));
-    atomicMin(&chunk.bounds.min[2], u32(pos.z));
-    atomicMax(&chunk.bounds.max[0], u32(pos.x) + 1);
-    atomicMax(&chunk.bounds.max[1], u32(pos.y) + 1);
-    atomicMax(&chunk.bounds.max[2], u32(pos.z) + 1);
+    atomicMin(&bounds.min[0], u32(pos.x));
+    atomicMin(&bounds.min[1], u32(pos.y));
+    atomicMin(&bounds.min[2], u32(pos.z));
+    atomicMax(&bounds.max[0], u32(pos.x) + 1);
+    atomicMax(&bounds.max[1], u32(pos.y) + 1);
+    atomicMax(&bounds.max[2], u32(pos.z) + 1);
   }
 }
 `;
@@ -83,10 +84,14 @@ class Terrain {
         entries: [
           {
             binding: 0,
-            resource: { buffer: chunk.data },
+            resource: { buffer: chunk.bounds },
           },
           {
             binding: 1,
+            resource: { buffer: chunk.data },
+          },
+          {
+            binding: 2,
             resource: { buffer: chunk.offset },
           },
         ],

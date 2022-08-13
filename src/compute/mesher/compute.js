@@ -101,7 +101,7 @@ fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {
   if (light == 0) {
     return;
   }
-  let offset : u32 = atomicAdd(&(faces.instanceCount), 1) * 6;
+  let offset : u32 = atomicAdd(&faces.instanceCount, 1) * 6;
   faces.data[offset] = f32(pos.x) + 0.5;
   faces.data[offset + 1] = f32(pos.y) + 0.5;
   faces.data[offset + 2] = f32(pos.z) + 0.5;
@@ -111,8 +111,8 @@ fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {
 }
 
 @compute @workgroup_size(4, 4, 4)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+  let pos : vec3<i32> = vec3<i32>(id.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {

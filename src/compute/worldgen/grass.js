@@ -7,8 +7,8 @@ ${Chunk.compute({ chunkSize })}
 @group(0) @binding(1) var<uniform> position : vec3<i32>;
 
 @compute @workgroup_size(4, 4, 4)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  let pos : vec3<i32> = vec3<i32>(GlobalInvocationID.xyz);
+fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+  let pos : vec3<i32> = vec3<i32>(id.xyz);
   if (
     pos.x >= chunkSize.x || pos.y >= chunkSize.y || pos.z >= chunkSize.z
   ) {

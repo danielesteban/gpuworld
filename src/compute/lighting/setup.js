@@ -23,7 +23,7 @@ fn main() {
   uniforms.count = count;
   uniforms.queue = chunk.queue;
 
-  workgroups[0] = u32(ceil(f32(count) / 64));
+  workgroups[0] = u32(ceil(f32(count) / 256));
   workgroups[1] = 1;
   workgroups[2] = 1;
 

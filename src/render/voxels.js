@@ -47,37 +47,41 @@ fn rotateY(rad : f32) -> mat3x3<f32> {
   );
 }
 
-@group(0) @binding(0) var<uniform> camera : Camera;
-@group(0) @binding(1) var<uniform> sunlight : vec3<f32>;
-
-@vertex
-fn main(voxel : VertexInput) -> VertexOutput {
-  var rotation : mat3x3<f32>;
-  switch (i32(voxel.face)) {
+fn getRotation(face : i32) -> mat3x3<f32> {
+  switch (face) {
     default {
-      rotation = mat3x3<f32>(
+      return mat3x3<f32>(
         1, 0, 0,
         0, 1, 0,
         0, 0, 1,
       );
     }
     case 1 {
-      rotation = rotateX(PI * -0.5);
+      return rotateX(PI * -0.5);
     }
     case 2 {
-      rotation = rotateX(PI * 0.5);
+      return rotateX(PI * 0.5);
     }
     case 3 {
-      rotation = rotateY(PI * -0.5);
+      return rotateY(PI * -0.5);
     }
     case 4 {
-      rotation = rotateY(PI * 0.5);
+      return rotateY(PI * 0.5);
     }
     case 5 {
-      rotation = rotateY(PI);
+      return rotateY(PI);
     }
   }
-  let mvPosition : vec4<f32> = camera.view * vec4<f32>(rotation * voxel.position + voxel.origin, 1);
+}
+
+@group(0) @binding(0) var<uniform> camera : Camera;
+@group(0) @binding(1) var<uniform> sunlight : vec3<f32>;
+
+@vertex
+fn main(voxel : VertexInput) -> VertexOutput {
+  let rotation : mat3x3<f32> = getRotation(i32(voxel.face));
+  let position : vec3<f32> = rotation * voxel.position + voxel.origin;
+  let mvPosition : vec4<f32> = camera.view * vec4<f32>(position, 1);
   var out : VertexOutput;
   out.position = camera.projection * mvPosition;
   out.normal = normalize(rotation * faceNormal);
@@ -123,21 +127,30 @@ const Face = (device) => {
     mappedAtCreation: true,
   });
   new Float32Array(buffer.getMappedRange()).set([
-    -0.5, -0.5,  0.5,        0, 1,
-     0.5, -0.5,  0.5,        1, 1,
-     0.5,  0.5,  0.5,        1, 0,
-     0.5,  0.5,  0.5,        1, 0,
-    -0.5,  0.5,  0.5,        0, 0,
-    -0.5, -0.5,  0.5,        0, 1,
+    -0.5, -0.5,  0.5,       0, 1,
+     0.5, -0.5,  0.5,       1, 1,
+     0.5,  0.5,  0.5,       1, 0,
+     0.5,  0.5,  0.5,       1, 0,
+    -0.5,  0.5,  0.5,       0, 0,
+    -0.5, -0.5,  0.5,       0, 1,
   ]);
   buffer.unmap();
   return buffer;
 };
 
 class Voxels {
-  constructor({ camera, device, samples, sunlight }) {
+  constructor({ camera, chunks, device, samples }) {
     this.atlas = new Atlas({ device });
+    this.chunks = chunks;
+    this.device = device;
     this.geometry = Face(device);
+    this.sunlight = {
+      buffer: device.createBuffer({
+        size: 3 * Float32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+      }),
+      data: new Float32Array(3),
+    };
     this.pipeline = device.createRenderPipeline({
       layout: 'auto',
       vertex: {
@@ -221,7 +234,7 @@ class Voxels {
         },
         {
           binding: 1,
-          resource: { buffer: sunlight.buffer },
+          resource: { buffer: this.sunlight.buffer },
         },
         {
           binding: 2,
@@ -235,8 +248,8 @@ class Voxels {
     });
   }
 
-  render(pass, chunks) {
-    const { bindings, geometry, pipeline } = this;
+  render(pass) {
+    const { bindings, chunks, geometry, pipeline } = this;
     pass.setPipeline(pipeline);
     pass.setBindGroup(0, bindings);
     pass.setVertexBuffer(0, geometry);
@@ -244,6 +257,14 @@ class Voxels {
       pass.setVertexBuffer(1, faces, 16);
       pass.drawIndirect(faces, 0);
     });
+  }
+
+  setSunlight(r, g, b) {
+    const { device, sunlight } = this;
+    sunlight.data[0] = r;
+    sunlight.data[1] = g;
+    sunlight.data[2] = b;
+    device.queue.writeBuffer(sunlight.buffer, 0, sunlight.data);
   }
 }
 

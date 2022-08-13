@@ -26,7 +26,7 @@ fn flood(pos : vec3<i32>, level : u32) {
       return;
     }
     if (atomicMax(&chunk_west.voxels[voxel].light, level) < level) {
-      chunk_west.queues[chunk_west.queue].data[atomicAdd(&(chunk_west.queues[chunk_west.queue].count), 1)] = voxel;
+      chunk_west.queues[chunk_west.queue].data[atomicAdd(&chunk_west.queues[chunk_west.queue].count, 1)] = voxel;
     }
     return;
   }
@@ -37,7 +37,7 @@ fn flood(pos : vec3<i32>, level : u32) {
       return;
     }
     if (atomicMax(&chunk_east.voxels[voxel].light, level) < level) {
-      chunk_east.queues[chunk_east.queue].data[atomicAdd(&(chunk_east.queues[chunk_east.queue].count), 1)] = voxel;
+      chunk_east.queues[chunk_east.queue].data[atomicAdd(&chunk_east.queues[chunk_east.queue].count, 1)] = voxel;
     }
     return;
   }
@@ -48,7 +48,7 @@ fn flood(pos : vec3<i32>, level : u32) {
       return;
     }
     if (atomicMax(&chunk_south.voxels[voxel].light, level) < level) {
-      chunk_south.queues[chunk_south.queue].data[atomicAdd(&(chunk_south.queues[chunk_south.queue].count), 1)] = voxel;
+      chunk_south.queues[chunk_south.queue].data[atomicAdd(&chunk_south.queues[chunk_south.queue].count, 1)] = voxel;
     }
     return;
   }
@@ -59,7 +59,7 @@ fn flood(pos : vec3<i32>, level : u32) {
       return;
     }
     if (atomicMax(&chunk_north.voxels[voxel].light, level) < level) {
-      chunk_north.queues[chunk_north.queue].data[atomicAdd(&(chunk_north.queues[chunk_north.queue].count), 1)] = voxel;
+      chunk_north.queues[chunk_north.queue].data[atomicAdd(&chunk_north.queues[chunk_north.queue].count, 1)] = voxel;
     }
     return;
   }
@@ -68,7 +68,7 @@ fn flood(pos : vec3<i32>, level : u32) {
     return;
   }
   if (atomicMax(&chunk.voxels[voxel].light, level) < level) {
-    chunk.queues[chunk.queue].data[atomicAdd(&(chunk.queues[chunk.queue].count), 1)] = voxel;
+    chunk.queues[chunk.queue].data[atomicAdd(&chunk.queues[chunk.queue].count, 1)] = voxel;
   }
 }
 
@@ -81,12 +81,12 @@ const neighbors = array<vec3<i32>, 6>(
   vec3<i32>(0, 1, 0),
 );
 
-@compute @workgroup_size(64)
-fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
-  if (GlobalInvocationID.x >= uniforms.count) {
+@compute @workgroup_size(256)
+fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+  if (id.x >= uniforms.count) {
     return;
   }
-  let voxel : u32 = chunk.queues[uniforms.queue].data[GlobalInvocationID.x];
+  let voxel : u32 = chunk.queues[uniforms.queue].data[id.x];
   let light : u32 = atomicLoad(&chunk.voxels[voxel].light);
   let pos : vec3<i32> = getPos(voxel);
   for (var n : i32 = 0; n < 6; n++) {

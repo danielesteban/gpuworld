@@ -1,5 +1,4 @@
 import Postprocessing from './postprocessing.js';
-import Voxels from './voxels.js';
 
 class Renderer {
   constructor({
@@ -41,26 +40,19 @@ class Renderer {
       },
     };
     this.postprocessing = new Postprocessing({ device, format });
-    this.sunlight = {
-      buffer: device.createBuffer({
-        size: 3 * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-      }),
-      data: new Float32Array(3),
-    };
+    this.scene = [];
     this.textures = new Map();
-    this.voxels = new Voxels({ camera, device, samples, sunlight: this.sunlight });
   }
 
-  render(command, chunks) {
+  render(command) {
     const {
       context,
       descriptor,
       postprocessing,
-      voxels,
+      scene,
     } = this;
     const pass = command.beginRenderPass(descriptor);
-    voxels.render(pass, chunks);
+    scene.forEach((object) => object.render(pass));
     pass.end();
     postprocessing.render(command, context.getCurrentTexture().createView());
   }
@@ -92,14 +84,6 @@ class Renderer {
     this.updateTexture(descriptor.colorAttachments[1], 'rgba16float', 'data', size);
     this.updateTexture(descriptor.depthStencilAttachment, 'depth24plus', 'depth', size, false);
     postprocessing.bindTextures(descriptor.colorAttachments);
-  }
-
-  setSunlight(r, g, b) {
-    const { device, sunlight } = this;
-    sunlight.data[0] = r;
-    sunlight.data[1] = g;
-    sunlight.data[2] = b;
-    device.queue.writeBuffer(sunlight.buffer, 0, sunlight.data);
   }
 
   updateTexture(object, format, key, size, resolve = true) {

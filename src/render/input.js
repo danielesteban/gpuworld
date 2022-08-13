@@ -13,6 +13,9 @@ class Input {
       movement: vec2.create(),
       position: vec2.create(),
     };
+    this.buttons = {
+      primary: false,
+    };
     this.look = {
       state: vec2.fromValues(Math.PI * 0.5, 0),
       target: vec2.fromValues(Math.PI * 0.5, 0),
@@ -135,7 +138,7 @@ class Input {
       this.lock();
       return;
     }
-    pointer.isDown = button === 0;
+    pointer.isDown = (button === 0 || button === 2);
   }
 
   onMouseMove({ clientX, clientY, movementX, movementY }) {
@@ -155,7 +158,7 @@ class Input {
 
   onMouseUp({ button }) {
     const { isLocked, pointer } = this;
-    if (isLocked && button === 0) {
+    if (isLocked && (button === 0 || button === 2)) {
       pointer.isDown = false;
     }
   }
@@ -180,9 +183,10 @@ class Input {
   }
 
   onPointerLock() {
-    const { keyboard, pointer } = this;
+    const { buttons, keyboard, pointer } = this;
     this.isLocked = !!document.pointerLockElement;
     if (!this.isLocked) {
+      buttons.primary = false;
       vec3.set(keyboard, 0, 0, 0);
       pointer.isDown = false;
     }
@@ -190,13 +194,20 @@ class Input {
 
   update(delta) {
     const { minPhi, maxPhi, sensitivity } = Input;
-    const { isLocked, gamepad, keyboard, pointer, look, position, speed, vectors } = this;
+    const { isLocked, buttons, gamepad, keyboard, pointer, look, position, speed, vectors } = this;
 
     if (isLocked) {
+      buttons.primary = pointer.isDown;
       vec3.copy(_movement, keyboard);
       vec2.copy(_look, pointer.movement);
       if (gamepad !== null) {
-        const { axes } = navigator.getGamepads()[gamepad];
+        const { axes, buttons: gamepadButtons } = navigator.getGamepads()[gamepad];
+        if (
+          (gamepadButtons[6] && gamepadButtons[6].pressed)
+          || (gamepadButtons[7] && gamepadButtons[7].pressed)
+        ) {
+          buttons.primary = true;
+        }
         if (Math.max(Math.abs(axes[2]), Math.abs(axes[3])) > 0.1) {
           vec2.set(_look, -axes[2] * sensitivity.gamepad, -axes[3] * sensitivity.gamepad);
         }
