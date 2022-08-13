@@ -38,7 +38,12 @@ const Main = ({ adapter, device }) => {
   renderer.scene.push(voxels);
 
   const input = new Input({
-    position: vec3.set(camera.position, 0, world.chunkSize.y * 0.5, 0),
+    position: vec3.set(
+      camera.position,
+      world.chunkSize.x * 0.5 + 0.5,
+      world.chunkSize.y * 0.5,
+      world.chunkSize.z * 0.5 + 0.5
+    ),
     target: renderer.canvas,
   });
   const light = new Light({ renderer, voxels });
