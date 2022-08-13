@@ -22,7 +22,7 @@ class Chunk {
         // voxels
         chunkSize.x * chunkSize.y * chunkSize.z * 2
         // queues
-        + (1 + chunkSize.x * chunkSize.z * 3) * 2
+        + (1 + chunkSize.x * chunkSize.z * 4) * 2
         // queue
         + 1
         // remesh
@@ -87,7 +87,7 @@ Chunk.compute = ({
 
   struct Queue {
     count : ${atomicQueueCount ? 'atomic<u32>' : 'u32'},
-    data : array<u32, ${chunkSize.x * chunkSize.z * 3}>,
+    data : array<u32, ${chunkSize.x * chunkSize.z * 4}>,
   }
 
   struct Voxel {

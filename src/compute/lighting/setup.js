@@ -57,7 +57,7 @@ class LightingSetup {
         {
           binding: 1,
           resource: { buffer: workgroups },
-        }
+        },
       ],
     });
   }
