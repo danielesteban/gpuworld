@@ -44,6 +44,7 @@ class World {
         chunk.neighbors = _neighbors.map((offset) => {
           const neighbor = this.get(vec2.add(_position, chunk.position, offset));
           if (!neighbor.hasGenerated) {
+            neighbor.hasGenerated = true;
             worldgen.compute(pass, neighbor);
           }
           return neighbor;
