@@ -7,13 +7,16 @@ const _zero = new Uint32Array(1);
 class Projectiles {
   constructor({ count = 32, chunkSize, device }) {
     this.device = device;
-    this.delta = {
-      buffer: device.createBuffer({
-        size: Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-      }),
-      data: new Float32Array(1),
-    };
+    {
+      const data = new Float32Array(1);
+      this.delta = {
+        buffer: device.createBuffer({
+          size: data.byteLength,
+          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+        }),
+        data,
+      };
+    }
     {
       const data = new Float32Array(8);
       this.input = {
