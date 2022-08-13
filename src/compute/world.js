@@ -32,8 +32,9 @@ class World {
 
   compute(command, delta) {
     const { chunks, frustum, lighting, mesher, projectiles, worldgen } = this;
+    projectiles.setup(command, delta);
     const pass = command.beginComputePass();
-    projectiles.step(pass, delta);
+    projectiles.step(pass);
     chunks.loaded.forEach((chunk) => {
       if (!chunk.hasGenerated) {
         chunk.hasGenerated = true;

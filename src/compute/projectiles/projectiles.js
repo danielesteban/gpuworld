@@ -2,8 +2,6 @@ import { vec3 } from 'gl-matrix';
 import ProjectilesCompute from './compute.js';
 import ProjectilesStep from './step.js';
 
-const _zero = new Uint32Array(1);
-
 class Projectiles {
   constructor({ count = 32, chunkSize, device }) {
     this.device = device;
@@ -67,6 +65,13 @@ class Projectiles {
     compute.compute(pass, chunk);
   }
 
+  setup(command, delta) {
+    const { delta: { buffer, data }, device, instances } = this;
+    data[0] = delta;
+    device.queue.writeBuffer(buffer, 0, data);
+    command.clearBuffer(instances, 4, 4);
+  }
+
   shoot(direction, origin) {
     const { device, input } = this;
     vec3.copy(input.position, origin);
@@ -75,11 +80,8 @@ class Projectiles {
     device.queue.writeBuffer(input.buffer, 0, input.data);
   }
 
-  step(pass, delta) {
-    const { delta: { buffer, data }, device, instances, passes: { step } } = this;
-    data[0] = delta;
-    device.queue.writeBuffer(buffer, 0, data);
-    device.queue.writeBuffer(instances, 4, _zero);
+  step(pass) {
+    const { passes: { step } } = this;
     step.compute(pass);
   }
 }
