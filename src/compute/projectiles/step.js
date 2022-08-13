@@ -6,9 +6,10 @@ struct Input {
 }
 
 struct Instances {
-  vertexCount : u32,
+  indexCount : u32,
   instanceCount : atomic<u32>,
-  firstVertex : u32,
+  firstIndex : u32,
+  baseVertex : u32,
   firstInstance : u32,
   data : array<f32>,
 }

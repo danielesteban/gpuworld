@@ -23,7 +23,7 @@ class Projectiles {
     this.instances = device.createBuffer({
       mappedAtCreation: true,
       size: (
-        4 * Uint32Array.BYTES_PER_ELEMENT
+        5 * Uint32Array.BYTES_PER_ELEMENT
         + count * 6 * Float32Array.BYTES_PER_ELEMENT
       ),
       usage: (
@@ -33,12 +33,12 @@ class Projectiles {
         | GPUBufferUsage.VERTEX
       ),
     });
+    new Uint32Array(this.instances.getMappedRange(0, Uint32Array.BYTES_PER_ELEMENT))[0] = 36;
+    this.instances.unmap();
     this.state = device.createBuffer({
       size: count * 12 * Float32Array.BYTES_PER_ELEMENT,
       usage: GPUBufferUsage.STORAGE,
     });
-    new Uint32Array(this.instances.getMappedRange(0, Uint32Array.BYTES_PER_ELEMENT))[0] = 36;
-    this.instances.unmap();
     this.passes = {
       compute: new ProjectilesCompute({ chunkSize, count, device, state: this.state }),
       step: new ProjectilesStep({

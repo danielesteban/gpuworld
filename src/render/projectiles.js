@@ -61,56 +61,59 @@ fn main(projectile : FragmentInput) -> FragmentOutput {
 `;
 
 const Cube = (device) => {
-  const buffer = device.createBuffer({
-    size: 216 * Float32Array.BYTES_PER_ELEMENT,
-    usage: GPUBufferUsage.VERTEX,
+  const index = device.createBuffer({
     mappedAtCreation: true,
+    size: 36 * Uint16Array.BYTES_PER_ELEMENT,
+    usage: GPUBufferUsage.INDEX,
   });
-  new Float32Array(buffer.getMappedRange()).set([
+  const indices = new Uint16Array(index.getMappedRange());
+  for (let i = 0, j = 0, k = 0; i < 6; i++, j += 6, k += 4) {
+    indices[j] = k;
+    indices[j + 1] = k + 1; 
+    indices[j + 2] = k + 2;
+    indices[j + 3] = k + 2; 
+    indices[j + 4] = k + 3; 
+    indices[j + 5] = k;
+  }
+  index.unmap();
+  const vertex = device.createBuffer({
+    mappedAtCreation: true,
+    size: 144 * Float32Array.BYTES_PER_ELEMENT,
+    usage: GPUBufferUsage.VERTEX,
+  });
+  new Float32Array(vertex.getMappedRange()).set([
     -0.1, -0.1,  0.1,        0,  0,  1,
      0.1, -0.1,  0.1,        0,  0,  1,
      0.1,  0.1,  0.1,        0,  0,  1,
-     0.1,  0.1,  0.1,        0,  0,  1,
     -0.1,  0.1,  0.1,        0,  0,  1,
-    -0.1, -0.1,  0.1,        0,  0,  1,
 
      0.1, -0.1, -0.1,        0,  0,  -1,
     -0.1, -0.1, -0.1,        0,  0,  -1,
     -0.1,  0.1, -0.1,        0,  0,  -1,
-    -0.1,  0.1, -0.1,        0,  0,  -1,
      0.1,  0.1, -0.1,        0,  0,  -1,
-     0.1, -0.1, -0.1,        0,  0,  -1,
 
     -0.1,  0.1, -0.1,        0,  1,  0,
      0.1,  0.1, -0.1,        0,  1,  0,
      0.1,  0.1,  0.1,        0,  1,  0,
-     0.1,  0.1,  0.1,        0,  1,  0,
     -0.1,  0.1,  0.1,        0,  1,  0,
-    -0.1,  0.1, -0.1,        0,  1,  0,
 
     -0.1, -0.1,  0.1,        0, -1,  0,
      0.1, -0.1,  0.1,        0, -1,  0,
      0.1, -0.1, -0.1,        0, -1,  0,
-     0.1, -0.1, -0.1,        0, -1,  0,
     -0.1, -0.1, -0.1,        0, -1,  0,
-    -0.1, -0.1,  0.1,        0, -1,  0,
 
      0.1, -0.1, -0.1,        1,  0,  0,
      0.1, -0.1,  0.1,        1,  0,  0,
      0.1,  0.1,  0.1,        1,  0,  0,
-     0.1,  0.1,  0.1,        1,  0,  0,
      0.1,  0.1, -0.1,        1,  0,  0,
-     0.1, -0.1, -0.1,        1,  0,  0,
 
     -0.1, -0.1,  0.1,       -1,  0,  0,
     -0.1, -0.1, -0.1,       -1,  0,  0,
     -0.1,  0.1, -0.1,       -1,  0,  0,
-    -0.1,  0.1, -0.1,       -1,  0,  0,
     -0.1,  0.1,  0.1,       -1,  0,  0,
-    -0.1, -0.1,  0.1,       -1,  0,  0,
   ]);
-  buffer.unmap();
-  return buffer;
+  vertex.unmap();
+  return { index, vertex };
 };
 
 class Projectiles {
@@ -195,9 +198,10 @@ class Projectiles {
     const { bindings, instances, geometry, pipeline } = this;
     pass.setPipeline(pipeline);
     pass.setBindGroup(0, bindings);
-    pass.setVertexBuffer(0, geometry);
-    pass.setVertexBuffer(1, instances, 16);
-    pass.drawIndirect(instances, 0);
+    pass.setIndexBuffer(geometry.index, 'uint16');
+    pass.setVertexBuffer(0, geometry.vertex);
+    pass.setVertexBuffer(1, instances, 20);
+    pass.drawIndexedIndirect(instances, 0);
   }
 }
 
