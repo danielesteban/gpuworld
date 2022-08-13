@@ -185,6 +185,7 @@ class Input {
   onPointerLock() {
     const { buttons, keyboard, pointer } = this;
     this.isLocked = !!document.pointerLockElement;
+    document.body.classList[this.isLocked ? 'add' : 'remove']('pointerlock');
     if (!this.isLocked) {
       buttons.primary = false;
       vec3.set(keyboard, 0, 0, 0);
