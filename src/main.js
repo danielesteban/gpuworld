@@ -40,9 +40,9 @@ const Main = ({ adapter, device }) => {
 
   vec3.set(
     camera.position,
-    world.chunkSize.x * 0.5 + 0.5,
-    world.chunkSize.y * 0.3 + 1,
-    world.chunkSize.z * 0.5 + 3.5
+    world.chunkSize.x * -0.5 + 1.5,
+    world.chunkSize.y * 0.2 - 1.5,
+    world.chunkSize.z * 1.5 + 1.5
   );
   const input = new Input({
     camera,
@@ -53,7 +53,7 @@ const Main = ({ adapter, device }) => {
 
   const anchor = vec2.create();
   const chunk = vec2.fromValues(world.chunkSize.x, world.chunkSize.z);
-  const current = vec2.fromValues(-1, -1);
+  const current = vec2.fromValues(-1000, -1000);
   const direction = vec3.create();
 
   let clock = performance.now() / 1000;

@@ -39,20 +39,22 @@ fn main(@builtin(global_invocation_id) GlobalInvocationID : vec3<u32>) {
 
 const DefaultGenerator = `
 const stone : vec3<f32> = vec3<f32>(0.6, 0.6, 0.8);
-const dirt : vec4<f32> = vec4<f32>(1.0, 1.0, 1.0, 1.0);
-const grass : vec4<f32> = vec4<f32>(0.6, 1.0, 0.6, 1.0);
+const dirt : vec4<f32> = vec4<f32>(1, 1, 1, 1);
+const grass : vec4<f32> = vec4<f32>(0.6, 1, 0.6, 1);
+const trunk : vec3<f32> = vec3<f32>(1, 0.6, 0.6);
+const leaves : vec3<f32> = vec3<f32>(0.6, 1, 0.6);
 fn getColorAt(texture : i32, pixel : vec2<i32>) -> vec4<f32> {
   switch texture {
     default {
       let n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(0.75, 1), 0)) - 0.5, 0) - 0.5) * 0.1;
-      return vec4<f32>(stone + n, 1.0);
+      return vec4<f32>(stone + n, 1);
     }
     case 1 {
       return dirt;
     }
     case 2 {
       let n = (max(noise3(vec3<f32>(vec2<f32>(pixel), 0)) - 0.5, 0) - 0.5) * 0.1;
-      return vec4<f32>(grass.xyz + n, 1.0);
+      return vec4<f32>(grass.xyz + n, 1);
     }
     case 3 {
       if (pixel.y > 4 - i32(4 * noise3(vec3<f32>(vec2<f32>(pixel), 0)))) {
@@ -60,12 +62,20 @@ fn getColorAt(texture : i32, pixel : vec2<i32>) -> vec4<f32> {
       }
       return grass;
     }
+    case 4 {
+      let n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(1, 0.75), 0)) - 0.5, 0) - 0.5) * 0.1;
+      return vec4<f32>(trunk + n, 1);
+    }
+    case 5 {
+      let n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(0.75, 1), 0)) - 0.5, 0) - 0.5) * 0.2;
+      return vec4<f32>(leaves + n, 1);
+    }
   }
 }
 `;
 
 class Atlas {
-  constructor({ device, count = 4, width = 16, height = 16 }) {
+  constructor({ device, count = 6, width = 16, height = 16 }) {
     this.device = device;
     this.count = count;
     this.width = width;

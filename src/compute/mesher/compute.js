@@ -80,10 +80,7 @@ fn getLight(pos : vec3<i32>, u : vec3<i32>, v : vec3<i32>) -> f32 {
 fn getTexture(face : i32, value : u32) -> i32 {
   switch value {
     default {
-      return 0;
-    }
-    case 2 {
-      return 1; 
+      return i32(value) - 1;
     }
     case 3 {
       if (face == 1) {
@@ -93,6 +90,9 @@ fn getTexture(face : i32, value : u32) -> i32 {
         return 1;
       }
       return 3;
+    }
+    case 4, 5 {
+      return i32(value);
     }
   }
 }

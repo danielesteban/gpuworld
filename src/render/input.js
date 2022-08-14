@@ -30,8 +30,8 @@ class Input {
     };
     this.forward = vec3.create();
     this.look = {
-      state: vec2.fromValues(Math.PI * 0.5, 0),
-      target: vec2.fromValues(Math.PI * 0.5, 0),
+      state: vec2.fromValues(Math.PI * 0.5, Math.PI * -0.5),
+      target: vec2.fromValues(Math.PI * 0.5, Math.PI * -0.5),
     };
     this.position = {
       target: vec3.clone(camera.position),
