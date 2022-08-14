@@ -207,7 +207,6 @@ class Input {
     const { minPhi, maxPhi, sensitivity } = Input;
     const { isLocked, buttons, camera, forward, gamepad, keyboard, pointer, look, position, speed } = this;
 
-    let isFlying = false;
     let isRunning = false;
     if (isLocked) {
       isRunning = keyboard.buttons.run;
@@ -241,9 +240,6 @@ class Input {
       }
       look.target[0] = Math.min(Math.max(look.target[0] + _look[1], minPhi), maxPhi);
       look.target[1] += _look[0];
-      if (_movement[1] > 0) {
-        isFlying = true;
-      }
     }
     vec2.set(pointer.movement, 0, 0);
 
@@ -261,6 +257,7 @@ class Input {
     );
 
     if (_movement[0] !== 0 || _movement[1] !== 0 || _movement[2] !== 0) {
+      const isFlying = _movement[1] > 0;
       vec3.copy(_forward, forward);
       if (!isFlying) {
         _forward[1] = 0;
