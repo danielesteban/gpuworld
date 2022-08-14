@@ -44,14 +44,14 @@ const grass : vec4<f32> = vec4<f32>(0.6, 1.0, 0.6, 1.0);
 fn getColorAt(texture : i32, pixel : vec2<i32>) -> vec4<f32> {
   switch texture {
     default {
-      var n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(0.75, 1), 0)) - 0.5, 0) - 0.5) * 0.1;
+      let n = (max(noise3(vec3<f32>(vec2<f32>(pixel) * vec2<f32>(0.75, 1), 0)) - 0.5, 0) - 0.5) * 0.1;
       return vec4<f32>(stone + n, 1.0);
     }
     case 1 {
       return dirt;
     }
     case 2 {
-      var n = (max(noise3(vec3<f32>(vec2<f32>(pixel), 0)) - 0.5, 0) - 0.5) * 0.1;
+      let n = (max(noise3(vec3<f32>(vec2<f32>(pixel), 0)) - 0.5, 0) - 0.5) * 0.1;
       return vec4<f32>(grass.xyz + n, 1.0);
     }
     case 3 {

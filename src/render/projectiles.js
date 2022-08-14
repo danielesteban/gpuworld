@@ -20,8 +20,8 @@ struct Camera {
 const worldUp : vec3<f32> = vec3<f32>(0, 1, 0);
 
 fn getRotation(direction : vec3<f32>) -> mat3x3<f32> {
-  var xaxis : vec3<f32> = normalize(cross(worldUp, direction));
-  var yaxis : vec3<f32> = normalize(cross(direction, xaxis));
+  let xaxis : vec3<f32> = normalize(cross(worldUp, direction));
+  let yaxis : vec3<f32> = normalize(cross(direction, xaxis));
   return mat3x3<f32>(xaxis, yaxis, direction);
 }
 
@@ -29,8 +29,8 @@ fn getRotation(direction : vec3<f32>) -> mat3x3<f32> {
 
 @vertex
 fn main(projectile : VertexInput) -> VertexOutput {
-  var rotation : mat3x3<f32> = getRotation(projectile.direction);
-  var position : vec3<f32> = rotation * projectile.position + projectile.origin;
+  let rotation : mat3x3<f32> = getRotation(projectile.direction);
+  let position : vec3<f32> = rotation * projectile.position + projectile.origin;
   let mvPosition : vec4<f32> = camera.view * vec4<f32>(position, 1);
   var out : VertexOutput;
   out.position = camera.projection * mvPosition;
