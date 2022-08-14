@@ -78,6 +78,7 @@ class World {
     for (let i = 0, l = chunks.loaded.length; i < l; i++) {
       const chunk = chunks.loaded[i];
       if (vec2.distance(anchor, chunk.position) > (unloadRadius - 0.5)) {
+        chunk.isLoaded = false;
         chunks.loaded.splice(i, 1);
         i--;
         l--;
@@ -85,7 +86,8 @@ class World {
     }
     World.getGrid(loadRadius).forEach((offset) => {
       const chunk = this.get(vec2.add(_position, anchor, offset));
-      if (!chunks.loaded.includes(chunk)) {
+      if (!chunk.isLoaded) {
+        chunk.isLoaded = true;
         chunks.loaded.push(chunk);
       }
     });
