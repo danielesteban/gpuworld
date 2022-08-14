@@ -18,7 +18,7 @@ fn FBM(p : vec3<f32>) -> f32 {
   return value;
 }
 
-@group(0) @binding(0) var<storage, read_write> trees : array<u32, 1>;
+@group(0) @binding(0) var<storage, read_write> trees : u32;
 @group(1) @binding(0) var<storage, read_write> bounds : Bounds;
 @group(1) @binding(1) var<storage, read_write> chunk : Chunk;
 @group(1) @binding(2) var<uniform> position : vec3<i32>;
@@ -39,7 +39,7 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
     if (pos.x == 0 && pos.z == 0) {
       // This is a bit hacky but I don't want to add
       // yet another pipeline just for this
-      trees[0] = 0;
+      trees = 0;
     }
     return;
   }
