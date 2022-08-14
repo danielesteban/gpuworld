@@ -41,9 +41,9 @@ fn main(@builtin(position) uv : vec4<f32>) -> @location(0) vec4<f32> {
 
 const Screen = (device) => {
   const buffer = device.createBuffer({
+    mappedAtCreation: true,
     size: 18 * Float32Array.BYTES_PER_ELEMENT,
     usage: GPUBufferUsage.VERTEX,
-    mappedAtCreation: true,
   });
   new Float32Array(buffer.getMappedRange()).set([
     -1, -1,  1,
