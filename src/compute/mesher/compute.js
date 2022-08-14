@@ -78,7 +78,7 @@ fn getLight(pos : vec3<i32>, u : vec3<i32>, v : vec3<i32>) -> f32 {
 }
 
 fn getTexture(face : i32, value : u32) -> i32 {
-  switch (value) {
+  switch value {
     default {
       return 0;
     }

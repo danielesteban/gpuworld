@@ -18,14 +18,6 @@ const Main = ({ adapter, device }) => {
     renderer.setSize(window.innerWidth, window.innerHeight)
   ), false);
 
-  const projectiles = new Projectiles({
-    instances: world.projectiles.instances,
-    camera,
-    device,
-    samples: renderer.samples,
-  });
-  renderer.scene.push(projectiles);
-
   const voxels = new Voxels({
     camera,
     chunks: world.chunks.loaded,
@@ -37,16 +29,27 @@ const Main = ({ adapter, device }) => {
   voxels.atlas.setupDragAndDrop();
   renderer.scene.push(voxels);
 
-  const input = new Input({
-    position: vec3.set(
-      camera.position,
-      world.chunkSize.x * 0.5 + 0.5,
-      world.chunkSize.y * 0.5,
-      world.chunkSize.z * 0.5 + 0.5
-    ),
-    target: renderer.canvas,
+  const projectiles = new Projectiles({
+    instances: world.projectiles.instances,
+    camera,
+    device,
+    samples: renderer.samples,
+    sunlight: renderer.sunlight,
   });
-  const light = new Light({ renderer, voxels });
+  renderer.scene.push(projectiles);
+
+  vec3.set(
+    camera.position,
+    world.chunkSize.x * 0.5 + 0.5,
+    world.chunkSize.y * 0.3 + 1,
+    world.chunkSize.z * 0.5 + 3.5
+  );
+  const input = new Input({
+    camera,
+    target: renderer.canvas,
+    world,
+  });
+  const light = new Light(renderer);
 
   const anchor = vec2.create();
   const chunk = vec2.fromValues(world.chunkSize.x, world.chunkSize.z);
@@ -70,10 +73,7 @@ const Main = ({ adapter, device }) => {
 
     input.update(delta);
     light.update(delta);
-  
-    vec3.add(camera.target, camera.position, input.vectors.forward);
-    camera.updateView();
- 
+
     vec2.floor(anchor, vec2.divide(anchor, vec2.set(anchor, camera.position[0], camera.position[2]), chunk));
     if (!vec2.equals(current, anchor)) {
       vec2.copy(current, anchor);
@@ -83,8 +83,8 @@ const Main = ({ adapter, device }) => {
     if (input.buttons.primary && (time - lastShot) > 0.05) {
       lastShot = time;
       world.projectiles.shoot(
-        input.vectors.forward,
-        vec3.scaleAndAdd(direction, camera.position, input.vectors.forward, 0.5),
+        input.forward,
+        vec3.add(direction, camera.position, input.forward),
       );
     }
 

@@ -41,6 +41,13 @@ class Renderer {
     };
     this.postprocessing = new Postprocessing({ device, format });
     this.scene = [];
+    this.sunlight = {
+      buffer: device.createBuffer({
+        size: 3 * Float32Array.BYTES_PER_ELEMENT,
+        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
+      }),
+      data: new Float32Array(3),
+    };
     this.textures = new Map();
   }
 
@@ -84,6 +91,14 @@ class Renderer {
     this.updateTexture(descriptor.colorAttachments[1], 'rgba16float', 'data', size);
     this.updateTexture(descriptor.depthStencilAttachment, 'depth24plus', 'depth', size, false);
     postprocessing.bindTextures(descriptor.colorAttachments);
+  }
+
+  setSunlight(r, g, b) {
+    const { device, sunlight } = this;
+    sunlight.data[0] = r;
+    sunlight.data[1] = g;
+    sunlight.data[2] = b;
+    device.queue.writeBuffer(sunlight.buffer, 0, sunlight.data);
   }
 
   updateTexture(object, format, key, size, resolve = true) {

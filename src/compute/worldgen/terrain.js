@@ -39,9 +39,9 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   }
 
   let wpos = vec3<f32>(position + pos);
-  if (wpos.y == 0 || wpos.y <= abs(FBM(wpos * 0.02) + 0.2) * f32(chunkSize.y) * 1.5) {
+  if (wpos.y == 0 || wpos.y <= abs(FBM(wpos * 0.015) + 0.3) * f32(chunkSize.y) * 1.5) {
     var value : u32;
-    if (abs(FBM(wpos.yzx * vec3<f32>(0.01, 0.04, 0.01))) > 0.4) {
+    if (abs(FBM(wpos.yzx * vec3<f32>(0.06, 0.03, 0.03))) > 0.3) {
       value = 1;
     } else {
       value = 2;

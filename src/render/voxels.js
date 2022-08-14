@@ -48,7 +48,7 @@ fn rotateY(rad : f32) -> mat3x3<f32> {
 }
 
 fn getRotation(face : i32) -> mat3x3<f32> {
-  switch (face) {
+  switch face {
     default {
       return mat3x3<f32>(
         1, 0, 0,
@@ -122,9 +122,9 @@ fn main(face : FragmentInput) -> FragmentOutput {
 
 const Face = (device) => {
   const buffer = device.createBuffer({
+    mappedAtCreation: true,
     size: 30 * Float32Array.BYTES_PER_ELEMENT,
     usage: GPUBufferUsage.VERTEX,
-    mappedAtCreation: true,
   });
   new Float32Array(buffer.getMappedRange()).set([
     -0.5, -0.5,  0.5,       0, 1,
@@ -139,18 +139,11 @@ const Face = (device) => {
 };
 
 class Voxels {
-  constructor({ camera, chunks, device, samples }) {
+  constructor({ camera, chunks, device, samples, sunlight }) {
     this.atlas = new Atlas({ device });
     this.chunks = chunks;
     this.device = device;
     this.geometry = Face(device);
-    this.sunlight = {
-      buffer: device.createBuffer({
-        size: 3 * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.UNIFORM,
-      }),
-      data: new Float32Array(3),
-    };
     this.pipeline = device.createRenderPipeline({
       layout: 'auto',
       vertex: {
@@ -234,7 +227,7 @@ class Voxels {
         },
         {
           binding: 1,
-          resource: { buffer: this.sunlight.buffer },
+          resource: { buffer: sunlight.buffer },
         },
         {
           binding: 2,
@@ -257,14 +250,6 @@ class Voxels {
       pass.setVertexBuffer(1, faces, 16);
       pass.drawIndirect(faces, 0);
     });
-  }
-
-  setSunlight(r, g, b) {
-    const { device, sunlight } = this;
-    sunlight.data[0] = r;
-    sunlight.data[1] = g;
-    sunlight.data[2] = b;
-    device.queue.writeBuffer(sunlight.buffer, 0, sunlight.data);
   }
 }
 

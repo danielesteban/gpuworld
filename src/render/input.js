@@ -3,35 +3,44 @@ import { vec2, vec3 } from 'gl-matrix';
 const _direction = vec3.create();
 const _look = vec2.create();
 const _movement = vec3.create();
+const _target = vec3.create();
+
+const _forward = vec3.create();
+const _right = vec3.create();
+const _worldUp = vec3.fromValues(0, 1, 0);
 
 class Input {
-  constructor({ position, target }) {
+  constructor({ camera, target, world }) {
+    this.camera = camera;
     this.target = target;
+    this.world = world;
+    this.isLocked = false;
     this.gamepad = null;
-    this.keyboard = vec3.create();
+    this.keyboard = {
+      buttons: { run: false },
+      movement: vec3.create(),
+    }
     this.pointer = {
+      buttons: { primary: false },
       movement: vec2.create(),
       position: vec2.create(),
     };
     this.buttons = {
       primary: false,
     };
+    this.forward = vec3.create();
     this.look = {
       state: vec2.fromValues(Math.PI * 0.5, 0),
       target: vec2.fromValues(Math.PI * 0.5, 0),
     };
     this.position = {
-      state: position,
-      target: vec3.clone(position),
+      target: vec3.clone(camera.position),
+      targetY: camera.position[1],
+      nextTarget: vec3.clone(camera.position),
     };
     this.speed = {
       state: 8,
       target: 8,
-    };
-    this.vectors = {
-      forward: vec3.create(),
-      right: vec3.create(),
-      worldUp: vec3.fromValues(0, 1, 0),
     };
     target.addEventListener('contextmenu', this.onContextMenu.bind(this), false);
     window.addEventListener('gamepaddisconnected', this.onGamepadDisconnected.bind(this), false);
@@ -81,22 +90,22 @@ class Input {
     }
     switch (key.toLowerCase()) {
       case 'w':
-        keyboard[2] = 1;
+        keyboard.movement[2] = 1;
         break;
       case 's':
-        keyboard[2] = -1;
+        keyboard.movement[2] = -1;
         break;
       case 'a':
-        keyboard[0] = -1;
+        keyboard.movement[0] = -1;
         break;
       case 'd':
-        keyboard[0] = 1;
+        keyboard.movement[0] = 1;
         break;
       case ' ':
-        keyboard[1] = 1;
+        keyboard.movement[1] = 1;
         break;
       case 'shift':
-        keyboard[1] = -1;
+        keyboard.buttons.run = true;
         break;
       default:
         break;
@@ -110,22 +119,22 @@ class Input {
     }
     switch (key.toLowerCase()) {
       case 'w':
-        if (keyboard[2] > 0) keyboard[2] = 0;
+        if (keyboard.movement[2] > 0) keyboard.movement[2] = 0;
         break;
       case 's':
-        if (keyboard[2] < 0) keyboard[2] = 0;
+        if (keyboard.movement[2] < 0) keyboard.movement[2] = 0;
         break;
       case 'a':
-        if (keyboard[0] < 0) keyboard[0] = 0;
+        if (keyboard.movement[0] < 0) keyboard.movement[0] = 0;
         break;
       case 'd':
-        if (keyboard[0] > 0) keyboard[0] = 0;
+        if (keyboard.movement[0] > 0) keyboard.movement[0] = 0;
         break;
       case ' ':
-        if (keyboard[1] > 0) keyboard[1] = 0;
+        if (keyboard.movement[1] > 0) keyboard.movement[1] = 0;
         break;
       case 'shift':
-        if (keyboard[1] < 0) keyboard[1] = 0;
+        keyboard.buttons.run = false;
         break;
       default:
         break;
@@ -138,7 +147,7 @@ class Input {
       this.lock();
       return;
     }
-    pointer.isDown = (button === 0 || button === 2);
+    pointer.buttons.primary = (button === 0 || button === 2);
   }
 
   onMouseMove({ clientX, clientY, movementX, movementY }) {
@@ -159,7 +168,7 @@ class Input {
   onMouseUp({ button }) {
     const { isLocked, pointer } = this;
     if (isLocked && (button === 0 || button === 2)) {
-      pointer.isDown = false;
+      pointer.buttons.primary = false;
     }
   }
 
@@ -188,18 +197,22 @@ class Input {
     document.body.classList[this.isLocked ? 'add' : 'remove']('pointerlock');
     if (!this.isLocked) {
       buttons.primary = false;
-      vec3.set(keyboard, 0, 0, 0);
-      pointer.isDown = false;
+      vec3.set(keyboard.movement, 0, 0, 0);
+      keyboard.buttons.run = false;
+      pointer.buttons.primary = false;
     }
   }
 
   update(delta) {
     const { minPhi, maxPhi, sensitivity } = Input;
-    const { isLocked, buttons, gamepad, keyboard, pointer, look, position, speed, vectors } = this;
+    const { isLocked, buttons, camera, forward, gamepad, keyboard, pointer, look, position, speed } = this;
 
+    let isFlying = false;
+    let isRunning = false;
     if (isLocked) {
-      buttons.primary = pointer.isDown;
-      vec3.copy(_movement, keyboard);
+      isRunning = keyboard.buttons.run;
+      buttons.primary = pointer.buttons.primary;
+      vec3.copy(_movement, keyboard.movement);
       vec2.copy(_look, pointer.movement);
       if (gamepad !== null) {
         const { axes, buttons: gamepadButtons } = navigator.getGamepads()[gamepad];
@@ -215,40 +228,101 @@ class Input {
         if (Math.max(Math.abs(axes[0]), Math.abs(axes[1])) > 0.1) {
           vec3.set(_movement, axes[0], 0, -axes[1]);
         }
+        if (
+          (gamepadButtons[0] && gamepadButtons[0].pressed)
+          || (gamepadButtons[4] && gamepadButtons[4].pressed)
+          || (gamepadButtons[5] && gamepadButtons[5].pressed)
+        ) {
+          _movement[1] = 1;
+        }
+        if (gamepadButtons[10] && gamepadButtons[10].pressed) {
+          isRunning = true;
+        }
       }
       look.target[0] = Math.min(Math.max(look.target[0] + _look[1], minPhi), maxPhi);
       look.target[1] += _look[0];
+      if (_movement[1] > 0) {
+        isFlying = true;
+      }
     }
     vec2.set(pointer.movement, 0, 0);
 
-    const damp = 1 - Math.exp(-20 * delta);
-    vec2.lerp(look.state, look.state, look.target, damp);
-    speed.state = speed.state * (1 - damp) + speed.target * damp;
+    {
+      const damp = 1 - Math.exp(-20 * delta);
+      vec2.lerp(look.state, look.state, look.target, damp);
+      speed.state = speed.state * (1 - damp) + speed.target * damp;
+    }
 
     vec3.set(
-      vectors.forward,
+      forward,
       Math.sin(look.state[0]) * Math.sin(look.state[1]),
       Math.cos(look.state[0]),
       Math.sin(look.state[0]) * Math.cos(look.state[1])
     );
-    vec3.normalize(vectors.right, vec3.cross(vectors.right, vectors.forward, vectors.worldUp));
 
     if (_movement[0] !== 0 || _movement[1] !== 0 || _movement[2] !== 0) {
+      vec3.copy(_forward, forward);
+      if (!isFlying) {
+        _forward[1] = 0;
+        vec3.normalize(_forward, _forward);
+      }
+      vec3.normalize(_right, vec3.cross(_right, _forward, _worldUp));
       vec3.set(_direction, 0, 0, 0);
-      vec3.scaleAndAdd(_direction, _direction, vectors.right, _movement[0]);
-      vec3.scaleAndAdd(_direction, _direction, vectors.worldUp, _movement[1]);
-      vec3.scaleAndAdd(_direction, _direction, vectors.forward, _movement[2]);
+      vec3.scaleAndAdd(_direction, _direction, _right, _movement[0]);
+      vec3.scaleAndAdd(_direction, _direction, _worldUp, _movement[1]);
+      vec3.scaleAndAdd(_direction, _direction, _forward, _movement[2]);
       vec3.set(_movement, 0, 0, 0);
       const length = vec3.length(_direction);
       if (length > 1) vec3.scale(_direction, _direction, 1 / length);
+      position.nextTarget[1] = position.target[1];
       vec3.scaleAndAdd(
-        position.target,
-        position.target,
+        position.nextTarget,
+        position.nextTarget,
         _direction,
-        delta * speed.state
+        delta * speed.state * (isRunning ? 2 : 1)
       );
+      if (isFlying) {
+        vec3.copy(position.target, position.nextTarget);
+        position.targetY = position.target[1];
+      } else {
+        this.updatePositionTarget();
+      }
     }
-    vec3.lerp(position.state, position.state, position.target, 1 - Math.exp(-10 * delta));
+
+    {
+      const damp = 1 - Math.exp(-10 * delta);
+      position.target[1] = position.target[1] * (1 - damp) + position.targetY * damp;
+      vec3.lerp(camera.position, camera.position, position.target, damp);
+      vec3.add(camera.target, camera.position, forward);
+      camera.updateView();
+    }
+  }
+
+  updatePositionTarget() {
+    const { position, world } = this;
+    if (position.isUpdating) {
+      position.needsUpdate = true;
+      return;
+    }
+    position.isUpdating = true;
+    vec3.copy(_target, position.nextTarget);
+    world
+      .getGround(_target)
+      .then((height) => {
+        position.isUpdating = false;
+        if (height === -1) {
+          vec3.copy(position.nextTarget, position.target);
+          position.needsUpdate = false;
+          return;
+        }
+        position.target[0] = _target[0];
+        position.target[2] = _target[2];
+        position.targetY = height + 3.2;
+        if (position.needsUpdate) {
+          position.needsUpdate = false;
+          this.updatePositionTarget();
+        }
+      });
   }
 }
 

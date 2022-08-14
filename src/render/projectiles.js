@@ -51,10 +51,12 @@ struct FragmentOutput {
   @location(1) data : vec4<f32>,
 }
 
+@group(0) @binding(1) var<uniform> sunlight : vec3<f32>;
+
 @fragment
 fn main(projectile : FragmentInput) -> FragmentOutput {
   var output : FragmentOutput;
-  output.color = vec4<f32>(1);
+  output.color = vec4<f32>(sunlight * 1.2, 1);
   output.data = vec4<f32>(normalize(projectile.normal), projectile.depth);
   return output;
 }
@@ -117,7 +119,7 @@ const Cube = (device) => {
 };
 
 class Projectiles {
-  constructor({ camera, device, instances, samples }) {
+  constructor({ camera, device, instances, samples, sunlight }) {
     this.geometry = Cube(device);
     this.instances = instances;
     this.pipeline = device.createRenderPipeline({
@@ -173,6 +175,7 @@ class Projectiles {
       },
       primitive: {
         topology: 'triangle-list',
+        cullMode: 'back',
       },
       depthStencil: {
         depthWriteEnabled: true,
@@ -189,6 +192,10 @@ class Projectiles {
         {
           binding: 0,
           resource: { buffer: camera.buffer },
+        },
+        {
+          binding: 1,
+          resource: { buffer: sunlight.buffer },
         },
       ],
     });

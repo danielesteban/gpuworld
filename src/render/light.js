@@ -3,9 +3,8 @@ import { vec3 } from 'gl-matrix';
 const _color = vec3.create();
 
 class Light {
-  constructor({ renderer, voxels }) {
+  constructor(renderer) {
     this.renderer = renderer;
-    this.voxels = voxels;
     this.colors = {
       background: {
         day: vec3.fromValues(0.2, 0.6, 0.6),
@@ -36,13 +35,13 @@ class Light {
     if (Math.abs(this.state - this.target) < 0.001) {
       return;
     }
-    const { colors, renderer, target, voxels } = this;
+    const { colors, renderer, target } = this;
     const damp = 1 - Math.exp(-10 * delta);
     this.state = this.state * (1 - damp) + target * damp;
     vec3.lerp(_color, colors.background.night, colors.background.day, this.state);
     renderer.setBackground(_color[0], _color[1], _color[2]);
     vec3.lerp(_color, colors.sunlight.night, colors.sunlight.day, this.state);
-    voxels.setSunlight(_color[0], _color[1], _color[2]);
+    renderer.setSunlight(_color[0], _color[1], _color[2]);
   }
 }
 

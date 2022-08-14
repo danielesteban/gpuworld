@@ -1,18 +1,20 @@
-import { vec2 } from 'gl-matrix';
+import { vec2, vec3 } from 'gl-matrix';
 import Chunk from './chunk.js';
 import Frustum from './frustum.js';
 import Lighting from './lighting/lighting.js';
 import Mesher from './mesher/mesher.js';
 import Projectiles from './projectiles/projectiles.js';
+import Query from './query.js';
 import Worldgen from './worldgen/worldgen.js';
 
+const _chunk = vec2.create();
 const _neighbors = [
   vec2.fromValues(1, 0),
   vec2.fromValues(-1, 0),
   vec2.fromValues(0, 1),
   vec2.fromValues(0, -1),
 ];
-const _position = vec2.create();
+const _voxel = vec3.create();
 
 class World {
   constructor({
@@ -27,6 +29,7 @@ class World {
     this.lighting = new Lighting({ chunkSize, device });
     this.mesher = new Mesher({ chunkSize, device, frustum: this.frustum });
     this.projectiles = new Projectiles({ chunkSize, device });
+    this.query = new Query({ chunkSize, device });
     this.worldgen = new Worldgen({ chunkSize, device });
   }
 
@@ -42,7 +45,7 @@ class World {
       }
       if (!chunk.neighbors) {
         chunk.neighbors = _neighbors.map((offset) => {
-          const neighbor = this.get(vec2.add(_position, chunk.position, offset));
+          const neighbor = this.getChunk(vec2.add(_chunk, chunk.position, offset));
           if (!neighbor.hasGenerated) {
             neighbor.hasGenerated = true;
             worldgen.compute(pass, neighbor);
@@ -62,7 +65,7 @@ class World {
     pass.end();
   }
 
-  get(position) {
+  getChunk(position) {
     const { chunks, chunkSize, device } = this;
     const key = `${position[0]}:${position[1]}`;
     let chunk = chunks.data.get(key);
@@ -71,6 +74,45 @@ class World {
       chunks.data.set(key, chunk);
     }
     return chunk;
+  }
+
+  static getGrid(radius) {
+    let grid = World.grids.get(radius);
+    if (!grid) {
+      grid = [];
+      for (let z = -radius; z <= radius; z++) {
+        for (let x = -radius; x <= radius; x++) {
+          vec2.set(_chunk, x, z);
+          const distance = vec2.length(_chunk);
+          if (distance <= (radius - 0.5)) {
+            grid.push({ distance, position: vec2.clone(_chunk)});
+          }
+        }
+      }
+      grid.sort(({ distance: a }, { distance: b }) => a - b);
+      grid = grid.map(({ position }) => position);
+      World.grids.set(radius, grid);
+    }
+    return grid;
+  }
+
+  getGround(position, height = 4) {
+    const { chunkSize, chunks, query } = this;
+    vec2.set(
+      _chunk,
+      Math.floor(position[0] / chunkSize.x),
+      Math.floor(position[2] / chunkSize.z)
+    );
+    const key = `${_chunk[0]}:${_chunk[1]}`;
+    const chunk = chunks.data.get(key);
+    if (!chunk || !chunk.hasGenerated) {
+      return Promise.resolve(-1);
+    }
+    vec3.copy(_voxel, position);
+    _voxel[0] -= _chunk[0] * chunkSize.x;
+    _voxel[1] = Math.min(_voxel[1], chunkSize.y - 1);
+    _voxel[2] -= _chunk[1] * chunkSize.z;
+    return query.getGround(chunk, _voxel, height);
   }
 
   load(anchor, loadRadius, unloadRadius) {
@@ -85,32 +127,12 @@ class World {
       }
     }
     World.getGrid(loadRadius).forEach((offset) => {
-      const chunk = this.get(vec2.add(_position, anchor, offset));
+      const chunk = this.getChunk(vec2.add(_chunk, anchor, offset));
       if (!chunk.isLoaded) {
         chunk.isLoaded = true;
         chunks.loaded.push(chunk);
       }
     });
-  }
-
-  static getGrid(radius) {
-    let grid = World.grids.get(radius);
-    if (!grid) {
-      grid = [];
-      for (let z = -radius; z <= radius; z++) {
-        for (let x = -radius; x <= radius; x++) {
-          vec2.set(_position, x, z);
-          const distance = vec2.length(_position);
-          if (distance <= (radius - 0.5)) {
-            grid.push({ distance, position: vec2.clone(_position)});
-          }
-        }
-      }
-      grid.sort(({ distance: a }, { distance: b }) => a - b);
-      grid = grid.map(({ position }) => position);
-      World.grids.set(radius, grid);
-    }
-    return grid;
   }
 }
 
