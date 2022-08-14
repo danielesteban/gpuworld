@@ -5,6 +5,7 @@ import Input from './render/input.js';
 import Light from './render/light.js';
 import Projectiles from './render/projectiles.js';
 import Renderer from './render/renderer.js';
+import SFX from './sfx/sfx.js';
 import Voxels from './render/voxels.js';
 import World from './compute/world.js';
 
@@ -50,6 +51,7 @@ const Main = ({ adapter, device }) => {
     world,
   });
   const light = new Light(renderer);
+  const sfx = new SFX();
 
   const anchor = vec2.create();
   const chunk = vec2.fromValues(world.chunkSize.x, world.chunkSize.z);
@@ -86,6 +88,7 @@ const Main = ({ adapter, device }) => {
         input.forward,
         vec3.add(direction, camera.position, input.forward),
       );
+      sfx.play('shot');
     }
 
     const command = device.createCommandEncoder();
