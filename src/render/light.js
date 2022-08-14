@@ -18,6 +18,7 @@ class Light {
     this.target = 1;
     this.state = 0;
     const toggle = document.getElementById('light');
+    toggle.classList.add('enabled');
     const [day, night] = toggle.getElementsByTagName('svg');
     day.addEventListener('click', () => {
       toggle.classList.remove('night');
