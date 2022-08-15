@@ -34,12 +34,13 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
     let voxel = getVoxel(pos);
     chunk.voxels[voxel].light = maxLight;
     chunk.queues[chunk.queue].data[atomicAdd(&chunk.queues[chunk.queue].count, 1)] = voxel;
-    if (pos.x == 0 && pos.z == 0) {
-      // This is a bit hacky but I don't want to add
-      // yet another pipeline just for this
-      trees = 0;
-    }
     return;
+  }
+
+  if (all(pos == vec3<i32>(0))) {
+    // This is a bit hacky but I don't want to add
+    // yet another pipeline just for this
+    trees = 0;
   }
 
   let wpos = vec3<f32>(position + pos);
