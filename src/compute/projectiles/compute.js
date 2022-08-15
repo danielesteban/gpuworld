@@ -79,9 +79,8 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
       for (var x : i32 = -1; x <= 1; x++) {
         let npos : vec3<i32> = pos + vec3<i32>(x, y, z);
         if (
-          npos.x < 0 || npos.x >= chunkSize.x
-          || npos.y < 0 || npos.y >= chunkSize.y
-          || npos.z < 0 || npos.z >= chunkSize.z
+          any(npos < vec3<i32>(0))
+          || any(npos >= chunkSize)
         ) {
           continue;
         }

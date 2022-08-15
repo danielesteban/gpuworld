@@ -113,7 +113,7 @@ fn pushFace(pos : vec3<i32>, face : i32, texture : i32, light : f32) {
 @compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   let pos : vec3<i32> = vec3<i32>(id.xyz);
-  if (pos.x >= chunkSize.x || pos.y >= chunkSize.y) {
+  if (any(pos >= chunkSize)) {
     return;
   }
   let value : u32 = chunk.voxels[getVoxel(pos)].value;

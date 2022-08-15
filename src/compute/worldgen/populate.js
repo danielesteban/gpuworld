@@ -18,16 +18,18 @@ struct Trees {
 @compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   let pos : vec3<i32> = vec3<i32>(id.xyz);
-  if (pos.x >= chunkSize.x || pos.y >= chunkSize.y) {
+  if (any(pos >= chunkSize)) {
     return;
   }
   let voxel = getVoxel(pos);
-  if (chunk.voxels[voxel].value == 2 && chunk.voxels[getVoxel(pos + vec3<i32>(0, 1, 0))].value == 0) {
+  if (
+    chunk.voxels[voxel].value == 2
+    && chunk.voxels[getVoxel(pos + vec3<i32>(0, 1, 0))].value == 0
+  ) {
     chunk.voxels[voxel].value = 3;
     if (
-      pos.x > 5 && pos.x < chunkSize.x - 6
-      && pos.y > 4 && pos.y < chunkSize.y - 20
-      && pos.z > 5 && pos.z < chunkSize.z - 6
+      all(pos > vec3<i32>(5, 4, 5))
+      && all(pos < (chunkSize - vec3<i32>(6, 20, 6)))
       && simplexNoise3(vec3<f32>(position + pos)) > 0.9
     ) {
       let tree = atomicAdd(&trees.count, 1);
