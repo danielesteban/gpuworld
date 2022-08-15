@@ -10,7 +10,7 @@ const Fragment = `
 @group(0) @binding(1) var dataTexture : texture_2d<f32>;
 
 const edgeColor : vec3<f32> = vec3<f32>(0, 0, 0);
-const edgeIntensity : f32 = 0.2;
+const edgeIntensity : f32 = 0.4;
 const depthScale : f32 = 0.4;
 const normalScale : f32 = 0.4;
 const offset : vec3<i32> = vec3<i32>(1, 1, 0);
@@ -30,12 +30,19 @@ fn edge(pixel : vec2<i32>) -> f32 {
   return clamp(max((edge.x + edge.y + edge.z) * normalScale, edge.w * depthScale), 0, 1);
 }
 
+fn linearTosRGB(linear : vec3<f32>) -> vec3<f32> {
+  if (all(linear <= vec3<f32>(0.0031308))) {
+    return linear * 12.92;
+  }
+  return (pow(abs(linear), vec3<f32>(1.0/2.4)) * 1.055) - vec3<f32>(0.055);
+}
+
 @fragment
 fn main(@builtin(position) uv : vec4<f32>) -> @location(0) vec4<f32> {
   let pixel : vec2<i32> = vec2<i32>(floor(uv.xy));
   var color : vec3<f32> = textureLoad(colorTexture, pixel, 0).xyz;
   color = mix(color, edgeColor, edge(pixel) * edgeIntensity);
-  return vec4<f32>(color, 1);
+  return vec4<f32>(linearTosRGB(color), 1);
 }
 `;
 

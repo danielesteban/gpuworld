@@ -87,7 +87,7 @@ class Renderer {
     camera.aspect = width / height;
     camera.updateProjection();
 
-    this.updateTexture(descriptor.colorAttachments[0], 'rgba8unorm', 'color', size);
+    this.updateTexture(descriptor.colorAttachments[0], 'rgba16float', 'color', size);
     this.updateTexture(descriptor.colorAttachments[1], 'rgba16float', 'data', size);
     this.updateTexture(descriptor.depthStencilAttachment, 'depth24plus', 'depth', size, false);
     postprocessing.bindTextures(descriptor.colorAttachments);

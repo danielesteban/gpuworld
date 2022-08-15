@@ -87,7 +87,7 @@ fn main(voxel : VertexInput) -> VertexOutput {
   out.normal = normalize(rotation * faceNormal);
   out.uv = voxel.uv;
   out.depth = -mvPosition.z;
-  out.light = sunlight * pow(voxel.light, 8);
+  out.light = sunlight * pow(voxel.light, 16);
   out.texture = i32(voxel.texture);
   return out;
 }
@@ -201,7 +201,7 @@ class Voxels {
           code: Fragment,
         }),
         targets: [
-          { format: 'rgba8unorm' },
+          { format: 'rgba16float' },
           { format: 'rgba16float' },
         ],
       },

@@ -1,6 +1,8 @@
 import Noise from '../compute/worldgen/noise.js';
 
 const Compute = ({ count, width, height, generator }) => `
+${Noise}
+
 struct Atlas {
   count : i32,
   width : i32,
@@ -18,8 +20,6 @@ const atlas : Atlas = Atlas(
 );
 
 @group(0) @binding(0) var texture : texture_storage_2d_array<rgba8unorm, write>;
-
-${Noise}
 
 ${generator}
 
@@ -82,15 +82,21 @@ class Atlas {
     this.height = height;
     this.texture = device.createTexture({
       dimension: '2d',
+      format: 'rgba8unorm-srgb',
       size: [width, height, count],
-      format: 'rgba8unorm',
-      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.STORAGE_BINDING | GPUTextureUsage.TEXTURE_BINDING,
+      usage: GPUTextureUsage.COPY_DST | GPUTextureUsage.TEXTURE_BINDING,
     });
-    this.workgroups = Math.ceil((count * width * height) / 256);
   }
 
   compute(generator = DefaultGenerator) {
-    const { device, count, width, height, texture, workgroups } = this;
+    const { device, count, width, height, texture } = this;
+    const size = [width, height, count];
+    const output = device.createTexture({
+      dimension: '2d',
+      format: 'rgba8unorm',
+      size,
+      usage: GPUTextureUsage.COPY_SRC | GPUTextureUsage.STORAGE_BINDING,
+    });
     const pipeline = device.createComputePipeline({
       layout: 'auto',
       compute: {
@@ -107,12 +113,14 @@ class Atlas {
       layout: pipeline.getBindGroupLayout(0),
       entries: [{
         binding: 0,
-        resource: texture.createView(),
+        resource: output.createView(),
       }],
     }));
-    pass.dispatchWorkgroups(workgroups);
+    pass.dispatchWorkgroups(Math.ceil((count * width * height) / 256));
     pass.end();
+    command.copyTextureToTexture({ texture: output }, { texture }, size);
     device.queue.submit([command.finish()]);
+    output.destroy();
   }
 
   setupDragAndDrop() {

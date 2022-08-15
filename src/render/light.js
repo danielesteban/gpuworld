@@ -7,12 +7,12 @@ class Light {
     this.renderer = renderer;
     this.colors = {
       background: {
-        day: vec3.fromValues(0.2, 0.6, 0.6),
-        night: vec3.fromValues(0.05, 0.05, 0.1),
+        day: vec3.fromValues(0.032, 0.32, 0.32),
+        night: vec3.fromValues(0.004, 0.004, 0.01),
       },
       sunlight: {
-        day: vec3.fromValues(1, 1, 0.6),
-        night: vec3.fromValues(0.1, 0.1, 0.2),
+        day: vec3.fromValues(1, 1, 0.32),
+        night: vec3.fromValues(0.01, 0.01, 0.032),
       },
     };
     this.target = 1;

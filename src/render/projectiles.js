@@ -169,7 +169,7 @@ class Projectiles {
           code: Fragment,
         }),
         targets: [
-          { format: 'rgba8unorm' },
+          { format: 'rgba16float' },
           { format: 'rgba16float' },
         ],
       },
