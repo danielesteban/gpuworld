@@ -1,10 +1,11 @@
-import Ambient from './ambient.ogg';
+import Plains from './plains.ogg';
 import Shot from './shot.ogg';
+import Wind from './wind.ogg';
 
 class SFX {
   constructor() {
     Promise.all([
-      Promise.all([Ambient, Shot].map((sound) => (
+      Promise.all([Plains, Shot, Wind].map((sound) => (
         fetch(sound).then((res) => res.arrayBuffer())
       ))),
       new Promise((resolve) => {
@@ -21,7 +22,7 @@ class SFX {
       this.context = new window.AudioContext();
       return Promise.all(buffers.map((buffer) => this.context.decodeAudioData(buffer)));
     })
-    .then(([ambient, shot]) => {
+    .then(([plains, shot, wind]) => {
       const { context } = this;
       this.output = context.createGain();
       this.output.connect(context.destination);
@@ -29,14 +30,21 @@ class SFX {
         this.output.gain.value = document.visibilityState === 'visible' ? 1 : 0;
       }, false);
       {
-        const source = context.createBufferSource();
-        source.buffer = ambient;
-        source.loop = true;
-        source.start(0);
-        const gain = context.createGain();
-        gain.gain.value = 0.8;
-        source.connect(gain);
-        gain.connect(this.output);
+        const getAmbientSource = (buffer) => {
+          const source = context.createBufferSource();
+          source.buffer = buffer;
+          source.loop = true;
+          source.start(0);
+          const gain = context.createGain();
+          source.connect(gain);
+          gain.connect(this.output);
+          return gain;
+        };
+        this.ambient = {
+          plains: getAmbientSource(plains),
+          wind: getAmbientSource(wind),
+        };
+        this.update(0);
       }
       this.sfx = context.createGain();
       this.sfx.gain.value = 0.2;
@@ -56,6 +64,17 @@ class SFX {
     source.detune.value = (Math.random() - 0.25) * 1000;
     source.connect(sfx);
     source.start(0);
+  }
+
+  update(altitude) {
+    const { ambient } = this;
+    if (!ambient) {
+      return;
+    }
+    const { plains, wind } = ambient;
+    const gain = Math.min(Math.max((altitude - 24) / 64, 0), 1);
+    plains.gain.value = Math.cos(gain * 0.5 * Math.PI) * 0.8;
+    wind.gain.value = Math.cos((1.0 - gain) * 0.5 * Math.PI) * 0.4;
   }
 }
 

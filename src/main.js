@@ -75,6 +75,7 @@ const Main = ({ adapter, device }) => {
 
     input.update(delta);
     light.update(delta);
+    sfx.update(camera.position[1]);
 
     vec2.floor(anchor, vec2.divide(anchor, vec2.set(anchor, camera.position[0], camera.position[2]), chunk));
     if (!vec2.equals(current, anchor)) {
