@@ -10,7 +10,7 @@ struct Query {
 }
 
 @group(0) @binding(0) var<storage, read_write> query : Query;
-@group(1) @binding(0) var<storage, read_write> chunk : Chunk;
+@group(1) @binding(0) var<storage, read> chunk : Chunk;
 
 fn getGround() -> i32 {
   var pos : vec3<i32> = query.input.xyz;

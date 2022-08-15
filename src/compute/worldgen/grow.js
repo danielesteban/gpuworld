@@ -11,7 +11,7 @@ struct Trees {
   data : array<u32, ${maxTrees}>,
 }
 
-@group(0) @binding(0) var<storage, read_write> trees : Trees;
+@group(0) @binding(0) var<storage, read> trees : Trees;
 @group(1) @binding(0) var<storage, read_write> bounds : Bounds;
 @group(1) @binding(1) var<storage, read_write> chunk : Chunk;
 @group(1) @binding(2) var<uniform> position : vec3<i32>;
