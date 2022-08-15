@@ -65,37 +65,64 @@ const neighbors = array<vec3<i32>, 6>(
   vec3<i32>(0, 1, 0),
 );
 
-@compute @workgroup_size(${Math.min(count, 256)})
-fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+fn collide(id : u32) {
+  let pos : vec3<i32> = vec3<i32>(floor(state[id].position)) - position;
   if (
-    id.x >= ${count}
-    || state[id.x].state == 0
+    any(pos < vec3<i32>(0))
+    || any(pos >= chunkSize)
   ) {
     return;
   }
-  let pos : vec3<i32> = vec3<i32>(floor(state[id.x].position)) - position;
-  for (var z : i32 = -1; z <= 1; z++) {
-    for (var y : i32 = -1; y <= 1; y++) {
-      for (var x : i32 = -1; x <= 1; x++) {
+  if (pos.y == 0) {
+    state[id].state = 0;
+    return;
+  }
+  let voxel : u32 = getVoxel(pos);
+  if (atomicMin(&chunk.voxels[voxel].value, 0) != 0) {
+    state[id].state = 2;
+    for (var n : i32 = 0; n < 6; n++) {
+      flood(pos + neighbors[n]);
+    }
+  }
+}
+
+fn detonate(id : u32) {
+  let pos : vec3<i32> = vec3<i32>(floor(state[id].position)) - position;
+  let radius = i32(state[id].state) - 2;
+  for (var z : i32 = -radius; z <= radius; z++) {
+    for (var y : i32 = -radius; y <= radius; y++) {
+      for (var x : i32 = -radius; x <= radius; x++) {
         let npos : vec3<i32> = pos + vec3<i32>(x, y, z);
         if (
-          any(npos < vec3<i32>(0))
+          any(npos < vec3<i32>(0, 1, 0))
           || any(npos >= chunkSize)
+          || length(vec3<f32>(f32(x), f32(y), f32(z))) > min(f32(radius), 2.5)
         ) {
-          continue;
-        }
-        if (npos.y == 0) {
-          state[id.x].state = 0;
           continue;
         }
         let voxel : u32 = getVoxel(npos);
         if (atomicMin(&chunk.voxels[voxel].value, 0) != 0) {
-          state[id.x].state = 2;
           for (var n : i32 = 0; n < 6; n++) {
             flood(npos + neighbors[n]);
           }
         }
       }
+    }
+  }
+}
+
+@compute @workgroup_size(${Math.min(count, 256)})
+fn main(@builtin(global_invocation_id) id : vec3<u32>) {
+  if (id.x >= ${count}) {
+    return;
+  }
+  switch (state[id.x].state) {
+    default {}
+    case 1 {
+      collide(id.x);
+    }
+    case 3, 4, 5 {
+      detonate(id.x);
     }
   }
 }

@@ -41,20 +41,31 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   if (id.x >= ${count}) {
     return;
   }
-  if (state[id.x].state == 1) {
-    state[id.x].distance++;
-    if (state[id.x].distance > 256) {
-      state[id.x].state = 0;
+  switch (state[id.x].state) {
+    default {}
+    case 1 {
+      state[id.x].distance++;
+      if (state[id.x].distance > 128) {
+        state[id.x].state = 0;
+        return;
+      }
+      let direction : vec3<f32> = state[id.x].direction;
+      state[id.x].position += direction * delta * 60;
+      pushInstance(state[id.x].position, direction);
       return;
     }
-    let direction : vec3<f32> = state[id.x].direction;
-    state[id.x].position += direction * delta * 60;
-    pushInstance(state[id.x].position, direction);
-    return;
-  }
-  if (state[id.x].state == 2) {
-    // @incomplete: Spawn explosion at state[id.x].position
-    state[id.x].state = 0;
+    case 2 {
+      // @incomplete: Spawn explosion at state[id.x].position
+      state[id.x].state += 1;
+      return;
+    }
+    case 3, 4 {
+      state[id.x].state += 1;
+      return;
+    }
+    case 5 {
+      state[id.x].state = 0;
+    }
   }
   if (atomicMin(&input.enabled, 0) != 0) {
     state[id.x].position = input.position; 
