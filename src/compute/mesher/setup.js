@@ -42,8 +42,8 @@ fn main() {
   }
   chunk.remesh = 0;
   faces.instanceCount = 0;
-  workgroups[0] = u32(ceil(f32(chunkSize.x) / ${Math.min(chunkSize.x, 256)}));
-  workgroups[1] = u32(chunkSize.y);
+  workgroups[0] = u32(ceil(f32(chunkSize.x) / 64));
+  workgroups[1] = u32(ceil(f32(chunkSize.y) / 4));
   workgroups[2] = u32(chunkSize.z);
 }
 `;

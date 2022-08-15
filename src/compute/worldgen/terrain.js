@@ -23,10 +23,10 @@ fn FBM(p : vec3<f32>) -> f32 {
 @group(1) @binding(1) var<storage, read_write> chunk : Chunk;
 @group(1) @binding(2) var<uniform> position : vec3<i32>;
 
-@compute @workgroup_size(${Math.min(chunkSize.x, 256)})
+@compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   let pos : vec3<i32> = vec3<i32>(id.xyz);
-  if (pos.x >= chunkSize.x) {
+  if (pos.x >= chunkSize.x || pos.y >= chunkSize.y) {
     return;
   }
 
@@ -83,8 +83,8 @@ class Terrain {
       ],
     });
     this.workgroups = {
-      x: Math.ceil(chunkSize.x / Math.min(chunkSize.x, 256)),
-      y: chunkSize.y,
+      x: Math.ceil(chunkSize.x / 64),
+      y: Math.ceil(chunkSize.y / 4),
       z: chunkSize.z,
     };
   }
