@@ -49,7 +49,7 @@ class Simulation {
       instances.unmap();
       const meshes = device.createBuffer({
         size: count * 4 * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
       });
       const state = device.createBuffer({
         size: count * 8 * Float32Array.BYTES_PER_ELEMENT,
@@ -87,7 +87,7 @@ class Simulation {
       instances.unmap();
       const state = device.createBuffer({
         size: count * 12 * Float32Array.BYTES_PER_ELEMENT,
-        usage: GPUBufferUsage.STORAGE,
+        usage: GPUBufferUsage.STORAGE | GPUBufferUsage.UNIFORM,
       });
       this.projectiles = {
         instances,
@@ -102,6 +102,7 @@ class Simulation {
           delta: this.delta,
           device,
           explosions: this.explosions,
+          projectiles: this.projectiles,
         }),
       },
       projectiles: {

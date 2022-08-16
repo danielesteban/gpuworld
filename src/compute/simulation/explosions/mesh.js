@@ -11,7 +11,7 @@ struct Instances {
 }
 
 @group(0) @binding(0) var<storage, read_write> instances : Instances;
-@group(0) @binding(1) var<storage, read_write> meshes : array<vec4<f32>, ${count}>;
+@group(0) @binding(1) var<uniform> meshes : array<vec4<f32>, ${count}>;
 @group(0) @binding(2) var<uniform> normals : array<vec3<f32>, ${instancesPerMesh}>;
 
 @compute @workgroup_size(${instancesPerMesh})
