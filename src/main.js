@@ -1,6 +1,7 @@
 import './main.css';
 import { vec2, vec3 } from 'gl-matrix';
 import Camera from './render/camera.js';
+import Explosions from './render/explosions.js';
 import Input from './render/input.js';
 import Light from './render/light.js';
 import Projectiles from './render/projectiles.js';
@@ -31,13 +32,23 @@ const Main = ({ adapter, device }) => {
   renderer.scene.push(voxels);
 
   const projectiles = new Projectiles({
-    instances: world.projectiles.instances,
+    instances: world.simulation.projectiles.instances,
     camera,
     device,
     samples: renderer.samples,
     sunlight: renderer.sunlight,
   });
   renderer.scene.push(projectiles);
+
+  const explosions = new Explosions({
+    instances: world.simulation.explosions.instances,
+    camera,
+    device,
+    geometry: projectiles.geometry,
+    samples: renderer.samples,
+    sunlight: renderer.sunlight,
+  });
+  renderer.scene.push(explosions);
 
   vec3.set(
     camera.position,
@@ -85,7 +96,7 @@ const Main = ({ adapter, device }) => {
 
     if (input.buttons.primary && (time - lastShot) > 0.05) {
       lastShot = time;
-      world.projectiles.shoot(
+      world.simulation.shoot(
         input.forward,
         vec3.add(direction, camera.position, input.forward),
       );

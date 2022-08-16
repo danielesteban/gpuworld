@@ -1,4 +1,4 @@
-import Chunk from '../chunk.js';
+import Chunk from '../../chunk.js';
 
 const Compute = ({ chunkSize, count }) => `
 ${Chunk.compute({ atomicQueueCount: true, atomicValue: true, chunkSize })}
@@ -6,7 +6,7 @@ ${Chunk.compute({ atomicQueueCount: true, atomicValue: true, chunkSize })}
 struct Projectile {
   position: vec3<f32>,
   direction: vec3<f32>,
-  distance: u32,
+  iteration: u32,
   state: u32,
 }
 

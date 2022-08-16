@@ -1,4 +1,10 @@
 const Compute = ({ count }) => `
+struct Explosion {
+  enabled: atomic<u32>,
+  position: vec3<f32>,
+  step: f32,
+}
+
 struct Input {
   position: vec3<f32>,
   direction: vec3<f32>,
@@ -17,16 +23,17 @@ struct Instances {
 struct Projectile {
   position: vec3<f32>,
   direction: vec3<f32>,
-  distance: u32,
+  iteration: u32,
   state: u32,
 }
 
 @group(0) @binding(0) var<uniform> delta : f32;
-@group(0) @binding(1) var<storage, read_write> input : Input;
-@group(0) @binding(2) var<storage, read_write> instances : Instances;
-@group(0) @binding(3) var<storage, read_write> state : array<Projectile, ${count}>;
+@group(0) @binding(1) var<storage, read_write> explosions : array<Explosion, ${count}>;
+@group(0) @binding(2) var<storage, read_write> input : Input;
+@group(0) @binding(3) var<storage, read_write> instances : Instances;
+@group(0) @binding(4) var<storage, read_write> projectiles : array<Projectile, ${count}>;
 
-fn pushInstance(position : vec3<f32>, direction : vec3<f32>) {
+fn instanceProjectile(position : vec3<f32>, direction : vec3<f32>) {
   let offset : u32 = atomicAdd(&instances.instanceCount, 1) * 6;
   instances.data[offset] = position.x;
   instances.data[offset + 1] = position.y;
@@ -36,48 +43,58 @@ fn pushInstance(position : vec3<f32>, direction : vec3<f32>) {
   instances.data[offset + 5] = direction.z;
 }
 
+fn spawnExplosion(position : vec3<f32>) {
+  for (var i : i32 = 0; i < ${count}; i++) {
+    if (atomicMax(&explosions[i].enabled, 1) != 1) {
+      explosions[i].position = position; 
+      explosions[i].step = 0;
+      break;
+    }
+  }
+}
+
 @compute @workgroup_size(${Math.min(count, 256)})
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   if (id.x >= ${count}) {
     return;
   }
-  switch (state[id.x].state) {
+  switch (projectiles[id.x].state) {
     default {}
     case 1 {
-      state[id.x].distance++;
-      if (state[id.x].distance > 128) {
-        state[id.x].state = 0;
+      projectiles[id.x].iteration++;
+      if (projectiles[id.x].iteration > 128) {
+        projectiles[id.x].state = 0;
         return;
       }
-      let direction : vec3<f32> = state[id.x].direction;
-      state[id.x].position += direction * delta * 60;
-      pushInstance(state[id.x].position, direction);
+      let direction : vec3<f32> = projectiles[id.x].direction;
+      projectiles[id.x].position += direction * delta * 60;
+      instanceProjectile(projectiles[id.x].position, direction);
       return;
     }
     case 2 {
-      // @incomplete: Spawn explosion at state[id.x].position
-      state[id.x].state += 1;
+      spawnExplosion(projectiles[id.x].position);
+      projectiles[id.x].state += 1;
       return;
     }
     case 3, 4 {
-      state[id.x].state += 1;
+      projectiles[id.x].state += 1;
       return;
     }
     case 5 {
-      state[id.x].state = 0;
+      projectiles[id.x].state = 0;
     }
   }
   if (atomicMin(&input.enabled, 0) != 0) {
-    state[id.x].position = input.position; 
-    state[id.x].direction = input.direction; 
-    state[id.x].distance = 0;
-    state[id.x].state = 1;
+    projectiles[id.x].position = input.position; 
+    projectiles[id.x].direction = input.direction; 
+    projectiles[id.x].iteration = 0;
+    projectiles[id.x].state = 1;
   }
 }
 `;
 
 class ProjectilesStep {
-  constructor({ count, delta, device, input, instances, state }) {
+  constructor({ count, delta, device, input, explosions, projectiles }) {
     this.pipeline = device.createComputePipeline({
       layout: 'auto',
       compute: {
@@ -96,15 +113,19 @@ class ProjectilesStep {
         },
         {
           binding: 1,
-          resource: { buffer: input.buffer },
+          resource: { buffer: explosions.state },
         },
         {
           binding: 2,
-          resource: { buffer: instances },
+          resource: { buffer: input.buffer },
         },
         {
           binding: 3,
-          resource: { buffer: state },
+          resource: { buffer: projectiles.instances },
+        },
+        {
+          binding: 4,
+          resource: { buffer: projectiles.state },
         },
       ],
     });

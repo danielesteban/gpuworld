@@ -3,8 +3,8 @@ import Chunk from './chunk.js';
 import Frustum from './frustum.js';
 import Lighting from './lighting/lighting.js';
 import Mesher from './mesher/mesher.js';
-import Projectiles from './projectiles/projectiles.js';
 import Query from './query.js';
+import Simulation from './simulation/simulation.js';
 import Worldgen from './worldgen/worldgen.js';
 
 const _chunk = vec2.create();
@@ -28,16 +28,15 @@ class World {
     this.frustum = new Frustum({ device, camera });
     this.lighting = new Lighting({ chunkSize, device });
     this.mesher = new Mesher({ chunkSize, device, frustum: this.frustum });
-    this.projectiles = new Projectiles({ chunkSize, device });
     this.query = new Query({ chunkSize, device });
+    this.simulation = new Simulation({ chunkSize, device });
     this.worldgen = new Worldgen({ chunkSize, device });
   }
 
   compute(command, delta) {
-    const { chunks, frustum, lighting, mesher, projectiles, worldgen } = this;
-    projectiles.setup(command, delta);
+    const { chunks, frustum, lighting, mesher, simulation, worldgen } = this;
     const pass = command.beginComputePass();
-    projectiles.step(pass);
+    simulation.step(delta, pass);
     chunks.loaded.forEach((chunk) => {
       if (!chunk.hasGenerated) {
         chunk.hasGenerated = true;
@@ -53,7 +52,7 @@ class World {
           return neighbor;
         });
       }
-      projectiles.compute(pass, chunk);
+      simulation.compute(pass, chunk);
     });
     chunks.loaded.forEach((chunk) => (
       lighting.compute(pass, chunk)
