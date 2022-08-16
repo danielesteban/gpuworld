@@ -36,7 +36,7 @@ class World {
   compute(command, delta) {
     const { chunks, frustum, lighting, mesher, simulation, worldgen } = this;
     const pass = command.beginComputePass();
-    simulation.step(delta, pass);
+    simulation.step(pass, delta);
     chunks.loaded.forEach((chunk) => {
       if (!chunk.hasGenerated) {
         chunk.hasGenerated = true;

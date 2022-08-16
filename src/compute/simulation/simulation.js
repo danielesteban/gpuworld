@@ -94,6 +94,25 @@ class Simulation {
         state,
       };
     }
+    {
+      const count = 8;
+      const size = (
+        4 * Uint32Array.BYTES_PER_ELEMENT
+        + count * 4 * Float32Array.BYTES_PER_ELEMENT
+      );
+      this.sfx = {
+        buffer: device.createBuffer({
+          size,
+          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.COPY_SRC | GPUBufferUsage.STORAGE,
+        }),
+        output: device.createBuffer({
+          size,
+          usage: GPUBufferUsage.COPY_DST | GPUBufferUsage.MAP_READ,
+        }),
+        data: new Float32Array(count * 4),
+        count,
+      };
+    }
     this.pipelines = {
       explosions: {
         mesh: new ExplosionsMesh({ count, device, explosions: this.explosions }),
@@ -103,6 +122,7 @@ class Simulation {
           device,
           explosions: this.explosions,
           projectiles: this.projectiles,
+          sfx: this.sfx,
         }),
       },
       projectiles: {
@@ -114,6 +134,7 @@ class Simulation {
           input: this.input,
           explosions: this.explosions,
           projectiles: this.projectiles,
+          sfx: this.sfx,
         }),
       },
       setup: new SimulationSetup({ device, explosions: this.explosions, projectiles: this.projectiles }),
@@ -125,7 +146,28 @@ class Simulation {
     compute.compute(pass, chunk);
   }
 
-  shoot(direction, origin) {
+  getQueuedSFX() {
+    const { device, sfx } = this;
+    if (sfx.isFetching) {
+      return Promise.resolve({ count: 0 });
+    }
+    sfx.isFetching = true;
+    const command = device.createCommandEncoder();
+    command.copyBufferToBuffer(sfx.buffer, 0, sfx.output, 0, sfx.output.size);
+    command.clearBuffer(sfx.buffer, 0, 4);
+    device.queue.submit([command.finish()]);
+    return sfx.output
+      .mapAsync(GPUMapMode.READ)
+      .then(() => {
+        const count = Math.min(new Uint32Array(sfx.output.getMappedRange(0, Uint32Array.BYTES_PER_ELEMENT))[0], sfx.count);
+        sfx.data.set(new Float32Array(sfx.output.getMappedRange(16, 16 + count * 4 * Float32Array.BYTES_PER_ELEMENT)));
+        sfx.output.unmap();
+        sfx.isFetching = false;
+        return { count, data: sfx.data };
+      });
+  }
+
+  shootProjectile(direction, origin) {
     const { device, input } = this;
     vec3.copy(input.position, origin);
     vec3.copy(input.direction, direction);
@@ -133,7 +175,7 @@ class Simulation {
     device.queue.writeBuffer(input.buffer, 0, input.data);
   }
 
-  step(delta, pass) {
+  step(pass, delta) {
     const { delta: { buffer, data }, device, pipelines: { explosions, projectiles, setup } } = this;
     data[0] = delta;
     device.queue.writeBuffer(buffer, 0, data);

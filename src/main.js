@@ -96,17 +96,23 @@ const Main = ({ adapter, device }) => {
 
     if (input.buttons.primary && (time - lastShot) > 0.05) {
       lastShot = time;
-      world.simulation.shoot(
+      world.simulation.shootProjectile(
         input.forward,
         vec3.add(direction, camera.position, input.forward),
       );
-      sfx.play('shot');
     }
 
     const command = device.createCommandEncoder();
     world.compute(command, delta);
     renderer.render(command);
     device.queue.submit([command.finish()]);
+
+    world.simulation.getQueuedSFX()
+      .then(({ count, data }) => {
+        for (let i = 0; i < count; i += 4) {
+          sfx.playAt(data[i + 3], data[i]);
+        }
+      });
   };
 
   requestAnimationFrame(animate);

@@ -1,3 +1,4 @@
+import Blast from './blast.ogg';
 import Plains from './plains.ogg';
 import Shot from './shot.ogg';
 import Wind from './wind.ogg';
@@ -5,7 +6,7 @@ import Wind from './wind.ogg';
 class SFX {
   constructor() {
     Promise.all([
-      Promise.all([Plains, Shot, Wind].map((sound) => (
+      Promise.all([Blast, Plains, Shot, Wind].map((sound) => (
         fetch(sound).then((res) => res.arrayBuffer())
       ))),
       new Promise((resolve) => {
@@ -22,7 +23,7 @@ class SFX {
       this.context = new window.AudioContext();
       return Promise.all(buffers.map((buffer) => this.context.decodeAudioData(buffer)));
     })
-    .then(([plains, shot, wind]) => {
+    .then(([blast, plains, shot, wind]) => {
       const { context } = this;
       this.output = context.createGain();
       this.output.connect(context.destination);
@@ -49,11 +50,12 @@ class SFX {
       this.sfx = context.createGain();
       this.sfx.gain.value = 0.2;
       this.sfx.connect(this.output);
-      this.buffers = { shot };
+      this.buffers = [blast, shot];
     });
   }
 
-  play(id) {
+  playAt(id/*, position */) {
+    // @incomplete: setup panner node for positional audio
     const { buffers, context, sfx } = this;
     if (!buffers || !buffers[id]) {
       return;
@@ -67,6 +69,7 @@ class SFX {
   }
 
   update(altitude) {
+    // @incomplete: update context listener for positional audio
     const { ambient } = this;
     if (!ambient) {
       return;

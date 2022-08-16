@@ -1,4 +1,4 @@
-const Compute = ({ count }) => `
+const Compute = ({ count, sfxCount }) => `
 struct Input {
   position: vec3<f32>,
   direction: vec3<f32>,
@@ -21,10 +21,16 @@ struct Projectile {
   state: u32,
 }
 
+struct SFX {
+  count : atomic<u32>,
+  data : array<vec4<f32>, ${sfxCount}>,
+}
+
 @group(0) @binding(0) var<uniform> delta : f32;
 @group(0) @binding(1) var<storage, read_write> input : Input;
 @group(0) @binding(2) var<storage, read_write> instances : Instances;
 @group(0) @binding(3) var<storage, read_write> projectiles : array<Projectile, ${count}>;
+@group(0) @binding(4) var<storage, read_write> sfx : SFX;
 
 fn instanceProjectile(position : vec3<f32>, direction : vec3<f32>) {
   let offset : u32 = atomicAdd(&instances.instanceCount, 1) * 6;
@@ -67,18 +73,22 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
     projectiles[id.x].direction = input.direction; 
     projectiles[id.x].iteration = 0;
     projectiles[id.x].state = 1;
+    let sound : u32 = atomicAdd(&sfx.count, 1);
+    if (sound < ${sfxCount}) {
+      sfx.data[sound] = vec4<f32>(input.position, 1);
+    }
   }
 }
 `;
 
 class ProjectilesStep {
-  constructor({ count, delta, device, input, projectiles }) {
+  constructor({ count, delta, device, input, projectiles, sfx }) {
     this.pipeline = device.createComputePipeline({
       layout: 'auto',
       compute: {
         entryPoint: 'main',
         module: device.createShaderModule({
-          code: Compute({ count }),
+          code: Compute({ count, sfxCount: sfx.count }),
         }),
       },
     });
@@ -100,6 +110,10 @@ class ProjectilesStep {
         {
           binding: 3,
           resource: { buffer: projectiles.state },
+        },
+        {
+          binding: 4,
+          resource: { buffer: sfx.buffer },
         },
       ],
     });
