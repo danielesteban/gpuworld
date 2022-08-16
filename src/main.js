@@ -86,7 +86,7 @@ const Main = ({ adapter, device }) => {
 
     input.update(delta);
     light.update(delta);
-    sfx.update(camera.position[1]);
+    sfx.update(camera.position, input.forward);
 
     vec2.floor(anchor, vec2.divide(anchor, vec2.set(anchor, camera.position[0], camera.position[2]), chunk));
     if (!vec2.equals(current, anchor)) {
@@ -110,7 +110,7 @@ const Main = ({ adapter, device }) => {
     world.simulation.getQueuedSFX()
       .then(({ count, data }) => {
         for (let i = 0; i < count; i += 4) {
-          sfx.playAt(data[i + 3], data[i]);
+          sfx.playAt(data[i + 3], data.subarray(i, i + 3));
         }
       });
   };

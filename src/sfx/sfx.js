@@ -37,6 +37,7 @@ class SFX {
           source.loop = true;
           source.start(0);
           const gain = context.createGain();
+          gain.gain.value = 0;
           source.connect(gain);
           gain.connect(this.output);
           return gain;
@@ -45,39 +46,59 @@ class SFX {
           plains: getAmbientSource(plains),
           wind: getAmbientSource(wind),
         };
-        this.update(0);
       }
+      this.buffers = [blast, shot];
+      this.panners = [];
       this.sfx = context.createGain();
       this.sfx.gain.value = 0.2;
       this.sfx.connect(this.output);
-      this.buffers = [blast, shot];
     });
   }
 
-  playAt(id/*, position */) {
-    // @incomplete: setup panner node for positional audio
-    const { buffers, context, sfx } = this;
+  playAt(id, position) {
+    const { buffers, context, panners, sfx } = this;
     if (!buffers || !buffers[id]) {
       return;
     }
+    let panner = panners.pop();
+    if (!panner) {
+      panner = context.createPanner();
+      panner.panningModel = 'HRTF';
+      panner.refDistance = 32;
+      panner.connect(sfx);
+    }
+    panner.positionX.value = position[0];
+    panner.positionY.value = position[1];
+    panner.positionZ.value = position[2];
     const buffer = buffers[id];
     const source = context.createBufferSource();
     source.buffer = buffer;
     source.detune.value = (Math.random() - 0.25) * 1000;
-    source.connect(sfx);
+    source.onended = () => {
+      source.disconnect(panner);
+      panners.push(panner);
+    };
+    source.connect(panner);
     source.start(0);
   }
 
-  update(altitude) {
-    // @incomplete: update context listener for positional audio
-    const { ambient } = this;
-    if (!ambient) {
-      return;
+  update(position, orientation) {
+    const { ambient, context } = this;
+    if (ambient) {
+      const { plains, wind } = ambient;
+      const gain = Math.min(Math.max((position[1] - 24) / 64, 0), 1);
+      plains.gain.value = Math.cos(gain * 0.5 * Math.PI) * 0.8;
+      wind.gain.value = Math.cos((1.0 - gain) * 0.5 * Math.PI) * 0.4;
     }
-    const { plains, wind } = ambient;
-    const gain = Math.min(Math.max((altitude - 24) / 64, 0), 1);
-    plains.gain.value = Math.cos(gain * 0.5 * Math.PI) * 0.8;
-    wind.gain.value = Math.cos((1.0 - gain) * 0.5 * Math.PI) * 0.4;
+    if (context) {
+      const { listener } = context;
+      listener.positionX.value = position[0];
+      listener.positionY.value = position[1];
+      listener.positionZ.value = position[2];
+      listener.forwardX.value = orientation[0];
+      listener.forwardY.value = orientation[1];
+      listener.forwardZ.value = orientation[2];
+    }
   }
 }
 
