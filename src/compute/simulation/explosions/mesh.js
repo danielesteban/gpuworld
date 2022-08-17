@@ -7,7 +7,7 @@ struct Instances {
   firstIndex : u32,
   baseVertex : u32,
   firstInstance : u32,
-  data : array<f32>,
+  data : array<f32, ${count * instancesPerMesh * 4}>,
 }
 
 @group(0) @binding(0) var<storage, read_write> instances : Instances;
@@ -16,7 +16,7 @@ struct Instances {
 
 @compute @workgroup_size(${instancesPerMesh})
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
-  let offset : u32 = id.y * ${instancesPerMesh} * 4 + id.x * 4;
+  let offset : u32 = (id.y * ${instancesPerMesh} + id.x) * 4;
   let step : f32 = meshes[id.y].w;
   let pos : vec3<f32> = meshes[id.y].xyz + normals[id.x] * step * 2;
   instances.data[offset] = pos.x;

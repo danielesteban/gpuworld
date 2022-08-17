@@ -11,7 +11,7 @@ struct Instances {
   firstIndex : u32,
   baseVertex : u32,
   firstInstance : u32,
-  data : array<f32>,
+  data : array<f32, ${count * 6}>,
 }
 
 struct Projectile {

@@ -82,7 +82,7 @@ Chunk.compute = ({
     instanceCount : ${atomicInstanceCount ? 'atomic<u32>' : 'u32'},
     firstVertex : u32,
     firstInstance : u32,
-    data : array<f32>,
+    data : array<f32, ${Math.ceil(chunkSize.x * chunkSize.y * chunkSize.z * 0.5) * 6 * 6}>,
   }
 
   struct Queue {
