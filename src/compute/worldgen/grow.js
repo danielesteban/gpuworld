@@ -37,7 +37,7 @@ fn grow(pos : vec3<i32>, value : u32) -> bool {
 
 @compute @workgroup_size(${Math.min(maxTrees, 256)})
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
-  if (id.x >= trees.count) {
+  if (id.x >= min(trees.count, ${maxTrees})) {
     return;
   }
   let pos : vec3<i32> = getPos(trees.data[id.x]) + vec3<i32>(0, -1, 0);

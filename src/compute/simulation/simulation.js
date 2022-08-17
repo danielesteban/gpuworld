@@ -115,7 +115,11 @@ class Simulation {
     }
     this.pipelines = {
       explosions: {
-        mesh: new ExplosionsMesh({ count, device, explosions: this.explosions }),
+        mesh: new ExplosionsMesh({
+          count,
+          device,
+          explosions: this.explosions,
+        }),
         step: new ExplosionsStep({
           count,
           delta: this.delta,
@@ -126,18 +130,27 @@ class Simulation {
         }),
       },
       projectiles: {
-        compute: new ProjectilesCompute({ chunkSize, count, device, state: this.projectiles.state }),
+        compute: new ProjectilesCompute({
+          chunkSize,
+          count,
+          device,
+          projectiles: this.projectiles,
+        }),
         step: new ProjectilesStep({
           count,
           delta: this.delta,
           device,
-          input: this.input,
           explosions: this.explosions,
+          input: this.input,
           projectiles: this.projectiles,
           sfx: this.sfx,
         }),
       },
-      setup: new SimulationSetup({ device, explosions: this.explosions, projectiles: this.projectiles }),
+      setup: new SimulationSetup({
+        device,
+        explosions: this.explosions,
+        projectiles: this.projectiles,
+      }),
     };
   }
 

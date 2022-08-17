@@ -10,7 +10,7 @@ struct Projectile {
   state: u32,
 }
 
-@group(0) @binding(0) var<storage, read_write> state : array<Projectile, ${count}>;
+@group(0) @binding(0) var<storage, read_write> projectiles : array<Projectile, ${count}>;
 @group(1) @binding(0) var<storage, read_write> chunk : Chunk;
 @group(1) @binding(1) var<storage, read_write> chunk_east : Chunk;
 @group(1) @binding(2) var<storage, read_write> chunk_west : Chunk;
@@ -66,17 +66,17 @@ const neighbors = array<vec3<i32>, 6>(
 );
 
 fn collide(id : u32) {
-  let pos : vec3<i32> = vec3<i32>(floor(state[id].position)) - position;
+  let pos : vec3<i32> = vec3<i32>(floor(projectiles[id].position)) - position;
   if (any(pos < vec3<i32>(0)) || any(pos >= chunkSize)) {
     return;
   }
   if (pos.y == 0) {
-    state[id].state = 2;
+    projectiles[id].state = 2;
     return;
   }
   let voxel : u32 = getVoxel(pos);
   if (atomicMin(&chunk.voxels[voxel].value, 0) != 0) {
-    state[id].state = 2;
+    projectiles[id].state = 2;
     for (var n : i32 = 0; n < 6; n++) {
       flood(pos + neighbors[n]);
     }
@@ -84,8 +84,8 @@ fn collide(id : u32) {
 }
 
 fn detonate(id : u32) {
-  let pos : vec3<i32> = vec3<i32>(floor(state[id].position)) - position;
-  let radius = i32(state[id].state) - 2;
+  let pos : vec3<i32> = vec3<i32>(floor(projectiles[id].position)) - position;
+  let radius = i32(projectiles[id].state) - 2;
   for (var z : i32 = -radius; z <= radius; z++) {
     for (var y : i32 = -radius; y <= radius; y++) {
       for (var x : i32 = -radius; x <= radius; x++) {
@@ -113,7 +113,7 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
   if (id.x >= ${count}) {
     return;
   }
-  switch (state[id.x].state) {
+  switch (projectiles[id.x].state) {
     default {}
     case 1 {
       collide(id.x);
@@ -126,7 +126,7 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
 `;
 
 class ProjectilesCompute {
-  constructor({ chunkSize, count, device, state }) {
+  constructor({ chunkSize, count, device, projectiles }) {
     this.device = device;
     this.pipeline = device.createComputePipeline({
       layout: 'auto',
@@ -142,7 +142,7 @@ class ProjectilesCompute {
       entries: [
         {
           binding: 0,
-          resource: { buffer: state },
+          resource: { buffer: projectiles.state },
         },
       ],
     });
