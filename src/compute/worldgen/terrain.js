@@ -2,7 +2,7 @@ import Chunk from '../chunk.js';
 import Noise from './noise.js';
 
 const Compute = ({ chunkSize }) => `
-${Chunk.compute({ atomicBounds: true, atomicQueueCount: true, chunkSize })}
+${Chunk.compute({ atomicQueueCount: true, chunkSize })}
 
 ${Noise}
 
@@ -19,9 +19,8 @@ fn FBM(p : vec3<f32>) -> f32 {
 }
 
 @group(0) @binding(0) var<storage, read_write> trees : u32;
-@group(1) @binding(0) var<storage, read_write> bounds : Bounds;
-@group(1) @binding(1) var<storage, read_write> chunk : Chunk;
-@group(1) @binding(2) var<uniform> position : vec3<i32>;
+@group(1) @binding(0) var<storage, read_write> chunk : Chunk;
+@group(1) @binding(1) var<uniform> position : vec3<i32>;
 
 @compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
@@ -52,12 +51,6 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
       value = 2;
     }
     chunk.voxels[getVoxel(pos)].value = value;
-    atomicMin(&bounds.min[0], u32(pos.x));
-    atomicMin(&bounds.min[1], u32(pos.y));
-    atomicMin(&bounds.min[2], u32(pos.z));
-    atomicMax(&bounds.max[0], u32(pos.x) + 1);
-    atomicMax(&bounds.max[1], u32(pos.y) + 1);
-    atomicMax(&bounds.max[2], u32(pos.z) + 1);
   }
 }
 `;
@@ -98,14 +91,10 @@ class Terrain {
         entries: [
           {
             binding: 0,
-            resource: { buffer: chunk.bounds },
-          },
-          {
-            binding: 1,
             resource: { buffer: chunk.data },
           },
           {
-            binding: 2,
+            binding: 1,
             resource: { buffer: chunk.offset },
           },
         ],

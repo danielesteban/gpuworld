@@ -247,7 +247,7 @@ class Voxels {
     pass.setBindGroup(0, bindings);
     pass.setVertexBuffer(0, geometry);
     chunks.forEach(({ faces }) => {
-      pass.setVertexBuffer(1, faces, 16);
+      pass.setVertexBuffer(1, faces, 40);
       pass.drawIndirect(faces, 0);
     });
   }

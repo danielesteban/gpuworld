@@ -1,7 +1,7 @@
 import Chunk from '../chunk.js';
 
 const Compute = ({ chunkSize }) => `
-${Chunk.compute({ atomicInstanceCount: true, chunkSize })}
+${Chunk.compute({ atomicBounds: true, atomicInstanceCount: true, chunkSize })}
 
 @group(0) @binding(0) var<storage, read> chunk : Chunk;
 @group(0) @binding(1) var<storage, read> chunk_east : Chunk;
@@ -117,18 +117,29 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
     return;
   }
   let value : u32 = chunk.voxels[getVoxel(pos)].value;
-  if (value != 0) {
-    for (var face : i32 = 0; face < 6; face++) {
-      let npos : vec3<i32> = pos + faceNormals[face].f;
-      if (getNeighbor(npos).value == 0) {
-        pushFace(
-          position + pos,
-          face,
-          getTexture(face, value),
-          getLight(npos, faceNormals[face].u, faceNormals[face].v)
-        );
-      }
+  if (value == 0) {
+    return;
+  }
+  var isVisible : bool = false;
+  for (var face : i32 = 0; face < 6; face++) {
+    let npos : vec3<i32> = pos + faceNormals[face].f;
+    if (getNeighbor(npos).value == 0) {
+      pushFace(
+        position + pos,
+        face,
+        getTexture(face, value),
+        getLight(npos, faceNormals[face].u, faceNormals[face].v)
+      );
+      isVisible = true;
     }
+  }
+  if (isVisible) {
+    atomicMin(&faces.bounds.min[0], u32(pos.x));
+    atomicMin(&faces.bounds.min[1], u32(pos.y));
+    atomicMin(&faces.bounds.min[2], u32(pos.z));
+    atomicMax(&faces.bounds.max[0], u32(pos.x) + 1);
+    atomicMax(&faces.bounds.max[1], u32(pos.y) + 1);
+    atomicMax(&faces.bounds.max[2], u32(pos.z) + 1);
   }
 }
 `;

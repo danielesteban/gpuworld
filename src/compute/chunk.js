@@ -5,18 +5,6 @@ class Chunk {
     this.bindings = {};
     this.position = vec2.clone(position);
 
-    this.bounds = device.createBuffer({
-      mappedAtCreation: true,
-      size: 6 * Uint32Array.BYTES_PER_ELEMENT,
-      usage: GPUBufferUsage.STORAGE,
-    });
-    new Uint32Array(this.bounds.getMappedRange()).set([
-      chunkSize.x,
-      chunkSize.y,
-      chunkSize.z,
-    ]);
-    this.bounds.unmap();
-
     this.data = device.createBuffer({
       size: (
         // voxels
@@ -39,6 +27,8 @@ class Chunk {
           // worst-case scenario
           Math.ceil(chunkSize.x * chunkSize.y * chunkSize.z * 0.5)
         ) * 6 * 6 * Float32Array.BYTES_PER_ELEMENT
+        // bounds
+        + 6 * Uint32Array.BYTES_PER_ELEMENT
       ),
       usage: (
         GPUBufferUsage.INDIRECT
@@ -73,8 +63,8 @@ Chunk.compute = ({
   const maxLight : u32 = 255;
 
   struct Bounds {
-    min : array<${atomicBounds ? 'atomic<u32>' : 'u32'}, 3>,
     max : array<${atomicBounds ? 'atomic<u32>' : 'u32'}, 3>,
+    min : array<${atomicBounds ? 'atomic<u32>' : 'u32'}, 3>,
   }
 
   struct Faces {
@@ -82,6 +72,7 @@ Chunk.compute = ({
     instanceCount : ${atomicInstanceCount ? 'atomic<u32>' : 'u32'},
     firstVertex : u32,
     firstInstance : u32,
+    bounds: Bounds,
     data : array<f32, ${Math.ceil(chunkSize.x * chunkSize.y * chunkSize.z * 0.5) * 6 * 6}>,
   }
 

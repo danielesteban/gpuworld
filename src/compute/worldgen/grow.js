@@ -2,7 +2,7 @@ import Chunk from '../chunk.js';
 import Noise from './noise.js';
 
 const Compute = ({ chunkSize, maxTrees }) => `
-${Chunk.compute({ atomicBounds: true, chunkSize })}
+${Chunk.compute({ chunkSize })}
 
 ${Noise}
 
@@ -12,9 +12,8 @@ struct Trees {
 }
 
 @group(0) @binding(0) var<storage, read> trees : Trees;
-@group(1) @binding(0) var<storage, read_write> bounds : Bounds;
-@group(1) @binding(1) var<storage, read_write> chunk : Chunk;
-@group(1) @binding(2) var<uniform> position : vec3<i32>;
+@group(1) @binding(0) var<storage, read_write> chunk : Chunk;
+@group(1) @binding(1) var<uniform> position : vec3<i32>;
 
 fn grow(pos : vec3<i32>, value : u32) -> bool {
   if (pos.y >= chunkSize.y - 1) {
@@ -26,12 +25,6 @@ fn grow(pos : vec3<i32>, value : u32) -> bool {
     return false;
   }
   chunk.voxels[voxel].value = value;
-  atomicMin(&bounds.min[0], u32(pos.x));
-  atomicMin(&bounds.min[1], u32(pos.y));
-  atomicMin(&bounds.min[2], u32(pos.z));
-  atomicMax(&bounds.max[0], u32(pos.x) + 1);
-  atomicMax(&bounds.max[1], u32(pos.y) + 1);
-  atomicMax(&bounds.max[2], u32(pos.z) + 1);
   return true;
 }
 
@@ -96,14 +89,10 @@ class Grow {
         entries: [
           {
             binding: 0,
-            resource: { buffer: chunk.bounds },
-          },
-          {
-            binding: 1,
             resource: { buffer: chunk.data },
           },
           {
-            binding: 2,
+            binding: 1,
             resource: { buffer: chunk.offset },
           },
         ],
