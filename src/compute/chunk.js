@@ -96,11 +96,10 @@ Chunk.compute = ({
   }
 
   fn getPos(voxel : u32) -> vec3<i32> {
-    let o : i32 = i32(voxel) % (chunkSize.x * chunkSize.y);
     return vec3<i32>(
-      o % chunkSize.x,
-      o / chunkSize.x,
-      i32(voxel) / (chunkSize.x * chunkSize.y),
+      i32(voxel) % chunkSize.x,
+      (i32(voxel) / chunkSize.x) % chunkSize.y,
+      i32(voxel) / chunkSize.x / chunkSize.y
     );
   }
 `;
