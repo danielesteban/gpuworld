@@ -67,14 +67,11 @@ const neighbors = array<vec3<i32>, 6>(
 
 fn collide(id : u32) {
   let pos : vec3<i32> = vec3<i32>(floor(state[id].position)) - position;
-  if (
-    any(pos < vec3<i32>(0))
-    || any(pos >= chunkSize)
-  ) {
+  if (any(pos < vec3<i32>(0)) || any(pos >= chunkSize)) {
     return;
   }
   if (pos.y == 0) {
-    state[id].state = 0;
+    state[id].state = 2;
     return;
   }
   let voxel : u32 = getVoxel(pos);
