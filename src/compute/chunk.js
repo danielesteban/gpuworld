@@ -23,12 +23,10 @@ class Chunk {
       size: (
         // indirect drawing buffer
         4 * Uint32Array.BYTES_PER_ELEMENT
-        + (
-          // worst-case scenario
-          Math.ceil(chunkSize.x * chunkSize.y * chunkSize.z * 0.5)
-        ) * 6 * 6 * Float32Array.BYTES_PER_ELEMENT
         // bounds
         + 6 * Uint32Array.BYTES_PER_ELEMENT
+        // worst-case scenario
+        + Math.ceil(chunkSize.x * chunkSize.y * chunkSize.z * 0.5) * 6 * 6 * Float32Array.BYTES_PER_ELEMENT
       ),
       usage: (
         GPUBufferUsage.INDIRECT
