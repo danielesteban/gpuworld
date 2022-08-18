@@ -18,13 +18,12 @@ fn FBM(p : vec3<f32>) -> f32 {
   return value;
 }
 
-@group(0) @binding(0) var<storage, read_write> trees : u32;
-@group(1) @binding(0) var<storage, read_write> chunk : Chunk;
-@group(1) @binding(1) var<uniform> position : vec3<i32>;
+@group(0) @binding(0) var<storage, read_write> chunk : Chunk;
+@group(0) @binding(1) var<uniform> position : vec3<i32>;
 
 @compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
-  let pos : vec3<i32> = vec3<i32>(id.xyz);
+  let pos : vec3<i32> = vec3<i32>(id);
   if (any(pos >= chunkSize)) {
     return;
   }
@@ -34,12 +33,6 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
     chunk.voxels[voxel].light = maxLight;
     chunk.queues[chunk.queue].data[atomicAdd(&chunk.queues[chunk.queue].count, 1)] = voxel;
     return;
-  }
-
-  if (all(pos == vec3<i32>(0))) {
-    // This is a bit hacky but I don't want to add
-    // yet another pipeline just for this
-    trees = 0;
   }
 
   let wpos = vec3<f32>(position + pos);
@@ -56,7 +49,7 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
 `;
 
 class Terrain {
-  constructor({ chunkSize, device, trees }) {
+  constructor({ chunkSize, device }) {
     this.device = device;
     this.pipeline = device.createComputePipeline({
       layout: 'auto',
@@ -67,15 +60,6 @@ class Terrain {
         entryPoint: 'main',
       },
     });
-    this.bindings = device.createBindGroup({
-      layout: this.pipeline.getBindGroupLayout(0),
-      entries: [
-        {
-          binding: 0,
-          resource: { buffer: trees },
-        },
-      ],
-    });
     this.workgroups = {
       x: Math.ceil(chunkSize.x / 64),
       y: Math.ceil(chunkSize.y / 4),
@@ -84,10 +68,10 @@ class Terrain {
   }
 
   compute(pass, chunk) {
-    const { bindings, device, pipeline, workgroups } = this;
+    const { device, pipeline, workgroups } = this;
     if (!chunk.bindings.terrain) {
       chunk.bindings.terrain = device.createBindGroup({
-        layout: pipeline.getBindGroupLayout(1),
+        layout: pipeline.getBindGroupLayout(0),
         entries: [
           {
             binding: 0,
@@ -101,8 +85,7 @@ class Terrain {
       });
     }
     pass.setPipeline(pipeline);
-    pass.setBindGroup(0, bindings);
-    pass.setBindGroup(1, chunk.bindings.terrain);
+    pass.setBindGroup(0, chunk.bindings.terrain);
     pass.dispatchWorkgroups(workgroups.x, workgroups.y, workgroups.z);
   }
 }

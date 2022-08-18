@@ -58,14 +58,13 @@ fn main(@builtin(global_invocation_id) id : vec3<u32>) {
 
 class Grow {
   constructor({ chunkSize, device, trees }) {
-    const maxTrees = (trees.size / 4) - 1;
     this.device = device;
     this.pipeline = device.createComputePipeline({
       layout: 'auto',
       compute: {
         entryPoint: 'main',
         module: device.createShaderModule({
-          code: Compute({ chunkSize, maxTrees }),
+          code: Compute({ chunkSize, maxTrees: trees.count }),
         }),
       },
     });
@@ -74,11 +73,11 @@ class Grow {
       entries: [
         {
           binding: 0,
-          resource: { buffer: trees },
+          resource: { buffer: trees.buffer },
         },
       ],
     });
-    this.workgroups = Math.ceil(maxTrees / 256);
+    this.workgroups = Math.ceil(trees.count / 256);
   }
 
   compute(pass, chunk) {

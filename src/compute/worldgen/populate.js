@@ -17,7 +17,7 @@ struct Trees {
 
 @compute @workgroup_size(64, 4)
 fn main(@builtin(global_invocation_id) id : vec3<u32>) {
-  let pos : vec3<i32> = vec3<i32>(id.xyz);
+  let pos : vec3<i32> = vec3<i32>(id);
   if (any(pos >= chunkSize)) {
     return;
   }
@@ -49,7 +49,7 @@ class Populate {
       compute: {
         entryPoint: 'main',
         module: device.createShaderModule({
-          code: Compute({ chunkSize, maxTrees: (trees.size / 4) - 1 }),
+          code: Compute({ chunkSize, maxTrees: trees.count }),
         }),
       },
     });
@@ -58,7 +58,7 @@ class Populate {
       entries: [
         {
           binding: 0,
-          resource: { buffer: trees },
+          resource: { buffer: trees.buffer },
         },
       ],
     });

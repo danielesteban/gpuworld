@@ -16,7 +16,7 @@ fn main() {
 }
 `;
 
-class MesherSetup {
+class SimulationSetup {
   constructor({ device, explosions, projectiles }) {
     this.device = device;
     this.pipeline = device.createComputePipeline({
@@ -55,4 +55,4 @@ class MesherSetup {
   }
 }
 
-export default MesherSetup;
+export default SimulationSetup;
