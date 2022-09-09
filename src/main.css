@@ -18,7 +18,7 @@ canvas {
   vertical-align: middle;
 }
 
-#canary, #loading {
+#support, #loading {
   display: none;
   position: absolute;
   bottom: 50%;
@@ -26,11 +26,11 @@ canvas {
   transform: translate(-50%, -50%);
 }
 
-#canary.enabled, #loading.enabled {
+#support.enabled, #loading.enabled {
   display: block;
 }
 
-#canary > a, #info > a {
+#support > a, #info > a {
   color: inherit;
 }
 

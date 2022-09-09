@@ -127,13 +127,6 @@ const GPU = async () => {
     throw new Error('WebGPU adapter');
   }
   const device = await adapter.requestDevice();
-  const check = device.createShaderModule({
-    code: `const checkConstSupport : f32 = 1;`,
-  });
-  const { messages } = await check.compilationInfo();
-  if (messages.find(({ type }) => type === 'error')) {
-    throw new Error('WGSL const support');
-  }
   return { adapter, device };
 };
 
@@ -141,6 +134,6 @@ GPU()
   .then(Main)
   .catch((e) => {
     console.error(e);
-    document.getElementById('canary').classList.add('enabled');
+    document.getElementById('support').classList.add('enabled');
   })
   .finally(() => document.getElementById('loading').classList.remove('enabled'));

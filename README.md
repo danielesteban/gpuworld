@@ -1,8 +1,6 @@
 [gpuworld](https://github.com/danielesteban/gpuworld)
 ==
 
-> Works only in Chrome Canary
-
 [![gpuworld](screenshot.png)](https://gpuworld.gatunes.com)
 
 ### Dev environment
